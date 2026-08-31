@@ -5,7 +5,7 @@ coverage
 .env
 .env.*
 !.env.example
-storage
+/storage
 *.log
 .vscode
 .idea

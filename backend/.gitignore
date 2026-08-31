@@ -39,8 +39,8 @@ coverage
 prisma/*.db
 src/generated
 
-# Local file storage (dev)
-storage
+# Local uploaded files (not src/uploads/storage/)
+/storage
 
 # TLS certificates
 nginx/certs/*
