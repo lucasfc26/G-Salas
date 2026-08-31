@@ -38,10 +38,10 @@ describe('Audit (e2e)', () => {
 
     const adminLogin = await request(server())
       .post('/api/v1/auth/login')
-      .send({ email: 'admin@esalas.dev', password: 'Senha@123' });
+      .send({ email: 'admin@gsalas.dev', password: 'Senha@123' });
     adminToken = data<{ accessToken: string }>(adminLogin).accessToken;
 
-    const clientEmail = `audit-client-${Date.now()}@esalas.dev`;
+    const clientEmail = `audit-client-${Date.now()}@gsalas.dev`;
     const created = await request(server())
       .post('/api/v1/users')
       .set('Authorization', `Bearer ${adminToken}`)
@@ -93,7 +93,7 @@ describe('Audit (e2e)', () => {
   it('records a LOGOUT entry after logging out', async () => {
     const login = await request(server())
       .post('/api/v1/auth/login')
-      .send({ email: 'admin@esalas.dev', password: 'Senha@123' });
+      .send({ email: 'admin@gsalas.dev', password: 'Senha@123' });
     const { refreshToken } = data<{ refreshToken: string }>(login);
     await request(server()).post('/api/v1/auth/logout').send({ refreshToken });
 

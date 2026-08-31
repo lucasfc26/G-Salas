@@ -38,12 +38,12 @@ describe('Rooms (e2e)', () => {
 
     const adminLogin = await request(server())
       .post('/api/v1/auth/login')
-      .send({ email: 'admin@esalas.dev', password: 'Senha@123' });
+      .send({ email: 'admin@gsalas.dev', password: 'Senha@123' });
     adminToken = data<{ accessToken: string }>(adminLogin).accessToken;
 
     const clientLogin = await request(server())
       .post('/api/v1/auth/login')
-      .send({ email: 'cliente@esalas.dev', password: 'Senha@123' });
+      .send({ email: 'cliente@gsalas.dev', password: 'Senha@123' });
     clientToken = data<{ accessToken: string }>(clientLogin).accessToken;
   });
 

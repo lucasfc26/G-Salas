@@ -24,6 +24,7 @@
   --color-mint-500: #2fa37c;
   --color-mint-600: #1f8a66;
   --color-mint-700: #1c6f54;
+  --color-mint-800: #123d2e;
 
   --color-canvas: var(--canvas);
   --color-surface: var(--surface);
@@ -42,6 +43,9 @@
   --ink: #0f172a;
   --muted: #5b6478;
   --faint: #8a92a6;
+  --logo-from: #3a9fc2;
+  --logo-via: #146485;
+  --logo-to: #114459;
   color-scheme: light;
 }
 
@@ -53,7 +57,14 @@
   --ink: #eef2f7;
   --muted: #9aa5bb;
   --faint: #6d7891;
+  --logo-from: #ffffff;
+  --logo-via: #f4f4f5;
+  --logo-to: #d4d4d8;
   color-scheme: dark;
+}
+
+.logo-mark {
+  background-image: linear-gradient(to bottom right, var(--logo-from), var(--logo-via), var(--logo-to));
 }
 
 html, body, #root {

@@ -2,7 +2,7 @@
 
 ## 0. Objetivo do projeto
 
-Transformar o MVP visual em uma plataforma SaaS real (E-Salas) para gestão de aluguel de salas e consultórios compartilhados, voltada a psicólogos, dentistas, nutricionistas, fisioterapeutas e outros profissionais de atendimento.
+Transformar o MVP visual em uma plataforma SaaS real (G-Salas) para gestão de aluguel de salas e consultórios compartilhados, voltada a psicólogos, dentistas, nutricionistas, fisioterapeutas e outros profissionais de atendimento.
 
 O sistema deverá possuir:
 

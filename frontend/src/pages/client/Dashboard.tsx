@@ -259,18 +259,24 @@ export default function ClientDashboard() {
         <div className="space-y-4">
           <Card className="p-5">
             <SectionTitle title="Cancelamentos restantes" icon={<AlertTriangle className="h-[18px] w-[18px]" />} />
-            <div className="flex items-end gap-2">
-              <p className="text-[30px] font-extrabold leading-none text-ink">{cancelLeft}</p>
-              <p className="pb-1 text-[13px] text-muted">de {mainContract.cancelLimit} neste mês</p>
-            </div>
-            <div className="mt-3">
-              <ProgressBar value={mainContract.cancelUsed} max={mainContract.cancelLimit} tone="rose" />
-            </div>
-            <p className="mt-3 text-[12.5px] leading-relaxed text-muted">
-              {cancelLeft <= 1
-                ? "Atenção: você está no limite de ocorrências deste ciclo."
-                : "Cancelamentos com mais de 24h devolvem o crédito integralmente."}
-            </p>
+            {mainContract ? (
+              <>
+                <div className="flex items-end gap-2">
+                  <p className="text-[30px] font-extrabold leading-none text-ink">{cancelLeft}</p>
+                  <p className="pb-1 text-[13px] text-muted">de {mainContract.cancelLimit} neste mês</p>
+                </div>
+                <div className="mt-3">
+                  <ProgressBar value={mainContract.cancelUsed} max={mainContract.cancelLimit} tone="rose" />
+                </div>
+                <p className="mt-3 text-[12.5px] leading-relaxed text-muted">
+                  {cancelLeft <= 1
+                    ? "Atenção: você está no limite de ocorrências deste ciclo."
+                    : "Cancelamentos com mais de 24h devolvem o crédito integralmente."}
+                </p>
+              </>
+            ) : (
+              <p className="mt-2 text-[13px] text-muted">Nenhum contrato ativo no momento.</p>
+            )}
           </Card>
 
           <Card className="p-5">

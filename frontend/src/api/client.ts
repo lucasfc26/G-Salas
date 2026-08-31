@@ -1,7 +1,7 @@
 const API_BASE = "/api/v1";
 
-const ACCESS_KEY = "esalas.accessToken";
-const REFRESH_KEY = "esalas.refreshToken";
+const ACCESS_KEY = "gsalas.accessToken";
+const REFRESH_KEY = "gsalas.refreshToken";
 
 export class ApiError extends Error {
   status: number;

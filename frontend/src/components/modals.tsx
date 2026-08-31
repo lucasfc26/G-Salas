@@ -34,7 +34,7 @@ export function ReserveModal({
   hour: string;
   roomId: string;
 }) {
-  const { addReservation, credits, reservations, rooms, availabilities } = useApp();
+  const { addReservation, credits, reservations, rooms, availabilities, me } = useApp();
   const room = rooms.find((r) => r.id === roomId) ?? rooms[0];
   if (!room) return null;
   const [duration, setDuration] = useState(1);
@@ -144,7 +144,7 @@ export function ReserveModal({
         </div>
 
         <p className="text-[11.5px] text-faint">
-          Titular: {currentClientId === "c1" ? "Dra. Maria Silva" : "Profissional"} · Plano {credits.contracted}h/mês
+          Titular: {me?.name ?? "Profissional"} · Plano {credits.contracted}h/mês
         </p>
       </div>
     </Modal>

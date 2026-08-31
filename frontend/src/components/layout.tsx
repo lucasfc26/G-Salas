@@ -26,6 +26,7 @@ import { useApp } from "../store";
 import { fmtDate } from "../data/mock";
 import { Avatar, Badge, Button, cx } from "./ui";
 
+
 type NavItem = { key: string; label: string; icon: React.ReactNode };
 
 const clientNav: NavItem[] = [
@@ -53,17 +54,14 @@ const adminNav: NavItem[] = [
 function Logo({ compact }: { compact?: boolean }) {
   return (
     <div className="flex items-center gap-2.5">
-      <span className="relative flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-brand-500 to-brand-800 shadow-lg shadow-brand-600/25">
-        <svg viewBox="0 0 24 24" className="h-5 w-5 text-white" fill="none" stroke="currentColor" strokeWidth="2.1" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M11 8v16" />
-          <path d="M11 8.9c0-.9.66-1.55 1.53-1.62l6-.48A1.6 1.6 0 0 1 20.2 8.4V24" />
-          <circle cx="16.6" cy="16.2" r="1" fill="currentColor" stroke="none" />
-        </svg>
+      <span className="logo-mark relative flex h-9 w-9 items-center justify-center overflow-hidden rounded-xl shadow-lg shadow-brand-800/30 dark:shadow-white/15">
+        <img src="/G-Salas-Logo.png" alt="G-Salas" className="h-full w-full object-contain p-0.5 dark:hidden" />
+        <img src="/G-Salas-Logo-D.png" alt="G-Salas" className="hidden h-full w-full object-contain p-0.5 dark:block" />
       </span>
       {!compact && (
         <div className="leading-tight">
           <p className="text-[19px] font-extrabold leading-none tracking-tight text-ink">
-            E-Salas
+            G-Salas
           </p>
           <p className="text-[11px] font-medium leading-tight text-faint">salas para profissionais de saúde</p>
         </div>

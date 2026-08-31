@@ -42,12 +42,12 @@ describe('Users (e2e)', () => {
 
     const adminLogin = await request(server())
       .post('/api/v1/auth/login')
-      .send({ email: 'admin@esalas.dev', password: 'Senha@123' });
+      .send({ email: 'admin@gsalas.dev', password: 'Senha@123' });
     adminToken = data<{ accessToken: string }>(adminLogin).accessToken;
 
     const clientLogin = await request(server())
       .post('/api/v1/auth/login')
-      .send({ email: 'cliente@esalas.dev', password: 'Senha@123' });
+      .send({ email: 'cliente@gsalas.dev', password: 'Senha@123' });
     clientToken = data<{ accessToken: string }>(clientLogin).accessToken;
   });
 
@@ -73,7 +73,7 @@ describe('Users (e2e)', () => {
       email: string;
       professionalProfile: { profession: string };
     }>(res);
-    expect(profile.email).toBe('cliente@esalas.dev');
+    expect(profile.email).toBe('cliente@gsalas.dev');
     expect(profile.professionalProfile.profession).toEqual(expect.any(String));
   });
 
@@ -184,7 +184,7 @@ describe('Users (e2e)', () => {
   });
 
   it('lets an admin create a user and rejects a duplicate e-mail', async () => {
-    const email = `novo-${Date.now()}@esalas.dev`;
+    const email = `novo-${Date.now()}@gsalas.dev`;
     const create = await request(server())
       .post('/api/v1/users')
       .set('Authorization', auth(adminToken))
@@ -204,7 +204,7 @@ describe('Users (e2e)', () => {
   });
 
   it('lets an admin suspend a user, revoking their sessions', async () => {
-    const email = `suspender-${Date.now()}@esalas.dev`;
+    const email = `suspender-${Date.now()}@gsalas.dev`;
     const create = await request(server())
       .post('/api/v1/users')
       .set('Authorization', auth(adminToken))

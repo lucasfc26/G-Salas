@@ -64,10 +64,10 @@ describe('Jobs (e2e)', () => {
 
     const adminLogin = await request(server())
       .post('/api/v1/auth/login')
-      .send({ email: 'admin@esalas.dev', password: 'Senha@123' });
+      .send({ email: 'admin@gsalas.dev', password: 'Senha@123' });
     adminToken = data<{ accessToken: string }>(adminLogin).accessToken;
 
-    const clientEmail = `jobs-client-${Date.now()}@esalas.dev`;
+    const clientEmail = `jobs-client-${Date.now()}@gsalas.dev`;
     const created = await request(server())
       .post('/api/v1/users')
       .set('Authorization', `Bearer ${adminToken}`)

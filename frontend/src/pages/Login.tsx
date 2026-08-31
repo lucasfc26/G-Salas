@@ -22,21 +22,21 @@ const roles: { key: Role; label: string; desc: string; icon: React.ReactNode; em
     label: "Cliente",
     desc: "Profissional de saúde",
     icon: <User className="h-[18px] w-[18px]" />,
-    email: "cliente@esalas.dev",
+    email: "cliente@gsalas.dev",
   },
   {
     key: "admin",
     label: "Administrador",
     desc: "Gestão do espaço",
     icon: <ShieldCheck className="h-[18px] w-[18px]" />,
-    email: "admin@esalas.dev",
+    email: "admin@gsalas.dev",
   },
 ];
 
 export default function Login() {
   const { login, theme, toggleTheme, toast, requestPasswordReset } = useApp();
   const [role, setRole] = useState<Role>("client");
-  const [email, setEmail] = useState("cliente@esalas.dev");
+  const [email, setEmail] = useState("cliente@gsalas.dev");
   const [password, setPassword] = useState("Senha@123");
   const [remember, setRemember] = useState(true);
   const [show, setShow] = useState(false);
@@ -187,7 +187,7 @@ export default function Login() {
           <div className="mt-6 flex items-center justify-between border-t border-line pt-5 text-[12.5px]">
             <span className="text-muted">Precisa de ajuda?</span>
             <button
-              onClick={() => toast("Suporte", "Fale com a equipe: suporte@esalas.dev", "info")}
+              onClick={() => toast("Suporte", "Fale com a equipe: suporte@gsalas.dev", "info")}
               className="inline-flex items-center gap-1.5 font-semibold text-brand-600 hover:underline"
             >
               <Headphones className="h-4 w-4" /> Falar com o suporte
@@ -207,10 +207,10 @@ export default function Login() {
         <div className="relative z-10 flex h-full w-full flex-col justify-end p-12 xl:p-16">
           <div className="max-w-md animate-fade-up">
             <span className="inline-flex items-center gap-2 rounded-full bg-white/15 px-3 py-1.5 text-[11.5px] font-bold uppercase tracking-wider text-white backdrop-blur">
-              <Sparkles className="h-3.5 w-3.5" /> E-Salas · Consultórios sob demanda
+              <Sparkles className="h-3.5 w-3.5" /> G-Salas · Consultórios sob demanda
             </span>
             <h2 className="mt-5 text-[40px] font-extrabold leading-[1.1] tracking-tight text-white xl:text-[48px]">
-              E-Salas
+              G-Salas
             </h2>
             <p className="mt-1 text-[16px] font-medium text-white/85">
               Salas para psicólogos, dentistas, nutricionistas, fisioterapeutas e outros profissionais

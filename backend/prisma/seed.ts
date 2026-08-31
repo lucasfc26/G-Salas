@@ -12,11 +12,11 @@ async function main() {
   const passwordHash = await argon2.hash(SEED_PASSWORD);
 
   const admin = await prisma.user.upsert({
-    where: { email: 'admin@esalas.dev' },
+    where: { email: 'admin@gsalas.dev' },
     update: {},
     create: {
-      name: 'Administradora E-Salas',
-      email: 'admin@esalas.dev',
+      name: 'Administradora G-Salas',
+      email: 'admin@gsalas.dev',
       passwordHash,
       role: 'ADMIN',
       status: 'ACTIVE',
@@ -24,11 +24,11 @@ async function main() {
   });
 
   const client = await prisma.user.upsert({
-    where: { email: 'cliente@esalas.dev' },
+    where: { email: 'cliente@gsalas.dev' },
     update: {},
     create: {
       name: 'Ana Beatriz Souza',
-      email: 'cliente@esalas.dev',
+      email: 'cliente@gsalas.dev',
       passwordHash,
       role: 'CLIENT',
       status: 'ACTIVE',
@@ -85,7 +85,7 @@ async function main() {
 
   const contract = await prisma.contract.upsert({
     where: { id: 'seed-contract-1' },
-    update: {},
+    update: { userId: client.id },
     create: {
       id: 'seed-contract-1',
       userId: client.id,
@@ -100,7 +100,7 @@ async function main() {
 
   await prisma.creditWallet.upsert({
     where: { id: 'seed-wallet-1' },
-    update: {},
+    update: { userId: client.id, contractId: contract.id },
     create: {
       id: 'seed-wallet-1',
       userId: client.id,

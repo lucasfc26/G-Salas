@@ -45,10 +45,10 @@ describe('Notifications (e2e)', () => {
 
     const adminLogin = await request(server())
       .post('/api/v1/auth/login')
-      .send({ email: 'admin@esalas.dev', password: 'Senha@123' });
+      .send({ email: 'admin@gsalas.dev', password: 'Senha@123' });
     adminToken = data<{ accessToken: string }>(adminLogin).accessToken;
 
-    const clientEmail = `notif-client-${Date.now()}@esalas.dev`;
+    const clientEmail = `notif-client-${Date.now()}@gsalas.dev`;
     const created = await request(server())
       .post('/api/v1/users')
       .set('Authorization', `Bearer ${adminToken}`)
@@ -211,7 +211,7 @@ describe('Notifications (e2e)', () => {
       where: { userId: clientUserId },
     });
 
-    const strangerEmail = `notif-stranger-${Date.now()}@esalas.dev`;
+    const strangerEmail = `notif-stranger-${Date.now()}@gsalas.dev`;
     await request(server())
       .post('/api/v1/users')
       .set('Authorization', auth(adminToken))
