@@ -2,6 +2,7 @@ import { AppProvider, useApp } from "./store";
 import { Shell } from "./components/layout";
 import { Card, Toasts } from "./components/ui";
 import Login from "./pages/Login";
+import Signup from "./pages/Signup";
 import ClientDashboard from "./pages/client/Dashboard";
 import Profile from "./pages/client/Profile";
 import Agenda from "./pages/client/Agenda";
@@ -22,6 +23,7 @@ import Settings from "./pages/Settings";
 import Notifications from "./pages/Notifications";
 import { FileQuestion } from "lucide-react";
 import { Button } from "./components/ui";
+import { useState } from "react";
 
 function NotFound() {
   const { navigate } = useApp();
@@ -91,6 +93,7 @@ function AdminRouter({ page, param }: { page: string; param?: string }) {
 
 function AppRoutes() {
   const { role, page, booting } = useApp();
+  const [guestPage, setGuestPage] = useState<"login" | "signup">("login");
   if (booting) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-canvas text-[14px] text-muted">
@@ -98,7 +101,13 @@ function AppRoutes() {
       </div>
     );
   }
-  if (!role) return <Login />;
+  if (!role) {
+    return guestPage === "signup" ? (
+      <Signup onBack={() => setGuestPage("login")} />
+    ) : (
+      <Login onSignup={() => setGuestPage("signup")} />
+    );
+  }
   return (
     <Shell>
       <div key={page.name + (page.param ?? "")} className="animate-fade-up">

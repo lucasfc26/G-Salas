@@ -16,28 +16,26 @@ import { Button, Card, cx, Input, Toggle } from "../components/ui";
 import { Logo } from "../components/layout";
 import type { Role } from "../types";
 
-const roles: { key: Role; label: string; desc: string; icon: React.ReactNode; email: string }[] = [
+const roles: { key: Role; label: string; desc: string; icon: React.ReactNode }[] = [
   {
     key: "client",
     label: "Cliente",
     desc: "Profissional de saúde",
     icon: <User className="h-[18px] w-[18px]" />,
-    email: "cliente@gsalas.dev",
   },
   {
     key: "admin",
     label: "Administrador",
     desc: "Gestão do espaço",
     icon: <ShieldCheck className="h-[18px] w-[18px]" />,
-    email: "admin@gsalas.dev",
   },
 ];
 
-export default function Login() {
+export default function Login({ onSignup }: { onSignup: () => void }) {
   const { login, theme, toggleTheme, toast, requestPasswordReset } = useApp();
   const [role, setRole] = useState<Role>("client");
-  const [email, setEmail] = useState("cliente@gsalas.dev");
-  const [password, setPassword] = useState("Senha@123");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [remember, setRemember] = useState(true);
   const [show, setShow] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -87,10 +85,7 @@ export default function Login() {
               {roles.map((r) => (
                 <button
                   key={r.key}
-                  onClick={() => {
-                    setRole(r.key);
-                    setEmail(r.email);
-                  }}
+                  onClick={() => setRole(r.key)}
                   className={cx(
                     "relative flex flex-col items-start gap-1.5 rounded-2xl border p-3.5 text-left transition-all duration-300",
                     role === r.key
@@ -182,6 +177,9 @@ export default function Login() {
               {loading ? "Entrando..." : "Entrar"}
               {!loading && <ArrowRight className="h-[18px] w-[18px]" />}
             </Button>
+            <Button type="button" variant="outline" size="lg" className="w-full" onClick={onSignup}>
+              Cadastre-se
+            </Button>
           </form>
 
           <div className="mt-6 flex items-center justify-between border-t border-line pt-5 text-[12.5px]">
@@ -193,10 +191,6 @@ export default function Login() {
               <Headphones className="h-4 w-4" /> Falar com o suporte
             </button>
           </div>
-
-          <p className="mt-6 text-center text-[11.5px] text-faint">
-            Ambiente de desenvolvimento · use as contas de seed do backend
-          </p>
         </div>
       </div>
 

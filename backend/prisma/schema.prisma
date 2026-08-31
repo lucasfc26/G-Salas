@@ -29,6 +29,12 @@ enum UserStatus {
   SUSPENDED
 }
 
+enum BillingPlan {
+  FREE
+  MONTHLY
+  YEARLY
+}
+
 model User {
   id           String     @id @default(cuid())
   name         String
@@ -38,6 +44,10 @@ model User {
   role         Role       @default(CLIENT)
   status       UserStatus @default(ACTIVE)
   avatarUrl    String?
+  spaceName    String?
+  billingPlan       BillingPlan?
+  billingExpiresAt  DateTime?
+  billingPaidAt     DateTime?
   createdAt    DateTime   @default(now())
   updatedAt    DateTime   @updatedAt
   lastLoginAt  DateTime?
@@ -493,6 +503,7 @@ enum AuditAction {
   LOGIN
   LOGIN_FAILED
   LOGOUT
+  SIGNUP
   CREATE_RESERVATION
   CANCEL_RESERVATION
   CREATE_CONTRACT

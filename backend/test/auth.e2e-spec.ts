@@ -141,6 +141,30 @@ describe('Auth (e2e)', () => {
     expect(refreshAfterLogout.status).toBe(401);
   });
 
+  it('registers a new administrator and returns a working token pair', async () => {
+    const email = `admin.signup.${Date.now()}@gsalas.dev`;
+    const res = await request(server()).post('/api/v1/auth/register').send({
+      name: 'Novo Espaço',
+      email,
+      spaceName: 'Clínica Teste',
+      password: 'Senha@123',
+      plan: 'FREE',
+    });
+
+    expect(res.status).toBe(201);
+    const tokens = data<TokenPairData>(res);
+    expect(tokens.accessToken).toEqual(expect.any(String));
+
+    const me = await request(server())
+      .get('/api/v1/auth/me')
+      .set('Authorization', `Bearer ${tokens.accessToken}`);
+
+    expect(me.status).toBe(200);
+    const profile = data<{ email: string; role: string }>(me);
+    expect(profile.email).toBe(email);
+    expect(profile.role).toBe('ADMIN');
+  });
+
   it('never reveals whether an e-mail exists on forgot-password', async () => {
     const known = await request(server())
       .post('/api/v1/auth/forgot-password')

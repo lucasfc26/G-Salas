@@ -1,6 +1,7 @@
 import { randomBytes, createHash } from 'node:crypto';
 import {
   BadRequestException,
+  ConflictException,
   Injectable,
   Logger,
   UnauthorizedException,
@@ -9,8 +10,11 @@ import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import * as argon2 from 'argon2';
 import type { AuthConfig } from '../config/auth.config.js';
+import { Prisma } from '../generated/prisma/client.js';
 import { PrismaService } from '../prisma/prisma.service.js';
+import type { RegisterDto } from './dto/register.dto.js';
 import type { JwtAccessPayload } from './interfaces/jwt-payload.interface.js';
+import { SIGNUP_PLAN_TERMS } from './signup-plans.js';
 
 export interface RequestMeta {
   ip?: string;
@@ -108,6 +112,66 @@ export class AuthService {
     ]);
 
     return this.issueTokenPair(user.id, user.email, user.role, meta);
+  }
+
+  async register(dto: RegisterDto, meta: RequestMeta): Promise<TokenPair> {
+    if (dto.plan !== 'FREE' && !dto.paymentMethod) {
+      throw new BadRequestException(
+        'Informe a forma de pagamento para este plano.',
+      );
+    }
+
+    const term = SIGNUP_PLAN_TERMS[dto.plan];
+    const passwordHash = await argon2.hash(dto.password);
+    const now = new Date();
+    const billingExpiresAt = new Date(
+      now.getTime() + term.days * 24 * 60 * 60 * 1000,
+    );
+
+    try {
+      const user = await this.prisma.user.create({
+        data: {
+          name: dto.name.trim(),
+          email: dto.email.trim().toLowerCase(),
+          phone: dto.phone?.trim() || null,
+          spaceName: dto.spaceName?.trim() || null,
+          role: 'ADMIN',
+          status: 'ACTIVE',
+          passwordHash,
+          billingPlan: dto.plan,
+          billingExpiresAt,
+          billingPaidAt: dto.plan === 'FREE' ? null : now,
+          lastLoginAt: now,
+        },
+        select: { id: true, email: true, role: true },
+      });
+
+      await this.prisma.auditLog.create({
+        data: {
+          userId: user.id,
+          action: 'SIGNUP',
+          entity: 'User',
+          entityId: user.id,
+          metadata: {
+            plan: dto.plan,
+            amount: term.amount,
+            paymentMethod: dto.paymentMethod ?? 'none',
+          },
+          ip: meta.ip,
+          userAgent: meta.userAgent,
+        },
+      });
+
+      return this.issueTokenPair(user.id, user.email, user.role, meta);
+    } catch (error) {
+      if (
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === 'P2002'
+      ) {
+        throw new ConflictException('Já existe uma conta com este e-mail.');
+      }
+      throw error;
+    }
   }
 
   async refresh(refreshToken: string, meta: RequestMeta): Promise<TokenPair> {

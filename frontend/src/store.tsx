@@ -38,6 +38,15 @@ interface Ctx {
   booting: boolean;
   me: MeUser | null;
   login: (email: string, password: string, remember?: boolean) => Promise<void>;
+  register: (input: {
+    name: string;
+    email: string;
+    phone?: string;
+    password: string;
+    spaceName?: string;
+    plan: "FREE" | "MONTHLY" | "YEARLY";
+    paymentMethod?: "card" | "pix";
+  }) => Promise<void>;
   logout: () => Promise<void>;
   requestPasswordReset: (email: string) => Promise<void>;
   page: Page;
@@ -260,6 +269,19 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         body: JSON.stringify({ email, password }),
       });
       setTokens(tokens.accessToken, tokens.refreshToken, remember);
+      await hydrate();
+      setPage({ name: "dashboard" });
+    },
+    [hydrate],
+  );
+
+  const register: Ctx["register"] = useCallback(
+    async (input) => {
+      const tokens = await api<{ accessToken: string; refreshToken: string }>("/auth/register", {
+        method: "POST",
+        body: JSON.stringify(input),
+      });
+      setTokens(tokens.accessToken, tokens.refreshToken, true);
       await hydrate();
       setPage({ name: "dashboard" });
     },
@@ -526,6 +548,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     booting,
     me,
     login,
+    register,
     logout,
     requestPasswordReset,
     page,
