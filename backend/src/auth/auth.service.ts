@@ -10,11 +10,18 @@ import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import * as argon2 from 'argon2';
 import type { AuthConfig } from '../config/auth.config.js';
-import { Prisma } from '../generated/prisma/client.js';
 import { PrismaService } from '../prisma/prisma.service.js';
 import type { RegisterDto } from './dto/register.dto.js';
 import type { JwtAccessPayload } from './interfaces/jwt-payload.interface.js';
 import { SIGNUP_PLAN_TERMS } from './signup-plans.js';
+
+function prismaErrorCode(error: unknown): string | undefined {
+  if (typeof error === 'object' && error !== null && 'code' in error) {
+    const code = (error as { code?: unknown }).code;
+    return typeof code === 'string' ? code : undefined;
+  }
+  return undefined;
+}
 
 export interface RequestMeta {
   ip?: string;
@@ -129,47 +136,62 @@ export class AuthService {
     );
 
     try {
-      const user = await this.prisma.user.create({
-        data: {
-          name: dto.name.trim(),
-          email: dto.email.trim().toLowerCase(),
-          phone: dto.phone?.trim() || null,
-          spaceName: dto.spaceName?.trim() || null,
-          role: 'ADMIN',
-          status: 'ACTIVE',
-          passwordHash,
-          billingPlan: dto.plan,
-          billingExpiresAt,
-          billingPaidAt: dto.plan === 'FREE' ? null : now,
-          lastLoginAt: now,
-        },
-        select: { id: true, email: true, role: true },
-      });
-
-      await this.prisma.auditLog.create({
-        data: {
-          userId: user.id,
-          action: 'SIGNUP',
-          entity: 'User',
-          entityId: user.id,
-          metadata: {
-            plan: dto.plan,
-            amount: term.amount,
-            paymentMethod: dto.paymentMethod ?? 'none',
+      const user = await this.prisma.$transaction(async (tx) => {
+        const created = await tx.user.create({
+          data: {
+            name: dto.name.trim(),
+            email: dto.email.trim().toLowerCase(),
+            phone: dto.phone?.trim() || null,
+            spaceName: dto.spaceName?.trim() || null,
+            role: 'ADMIN',
+            status: 'ACTIVE',
+            passwordHash,
+            billingPlan: dto.plan,
+            billingExpiresAt,
+            billingPaidAt: dto.plan === 'FREE' ? null : now,
+            lastLoginAt: now,
           },
-          ip: meta.ip,
-          userAgent: meta.userAgent,
-        },
+          select: { id: true, email: true, role: true },
+        });
+
+        await tx.auditLog.create({
+          data: {
+            userId: created.id,
+            action: 'SIGNUP',
+            entity: 'User',
+            entityId: created.id,
+            metadata: {
+              plan: dto.plan,
+              amount: term.amount,
+              paymentMethod: dto.paymentMethod ?? 'none',
+            },
+            ip: meta.ip,
+            userAgent: meta.userAgent,
+          },
+        });
+
+        return created;
       });
 
       return this.issueTokenPair(user.id, user.email, user.role, meta);
     } catch (error) {
-      if (
-        error instanceof Prisma.PrismaClientKnownRequestError &&
-        error.code === 'P2002'
-      ) {
+      const prismaCode = prismaErrorCode(error);
+      if (prismaCode === 'P2002') {
         throw new ConflictException('Já existe uma conta com este e-mail.');
       }
+      if (prismaCode === 'P2022' || prismaCode === 'P2010') {
+        this.logger.error(
+          'Cadastro falhou por schema desatualizado. Rode prisma migrate deploy.',
+          error instanceof Error ? error.stack : String(error),
+        );
+        throw new BadRequestException(
+          'O banco ainda não está atualizado. No servidor, rode as migrations e tente novamente.',
+        );
+      }
+      this.logger.error(
+        `Cadastro falhou (${prismaCode ?? 'sem código Prisma'})`,
+        error instanceof Error ? error.stack : String(error),
+      );
       throw error;
     }
   }
