@@ -1,0 +1,49 @@
+# Workspace extras (not part of the product)
+ESCOPO/
+saas-room-rental-frontend/
+*.zip
+Identidade Lumiar.pdf
+prints/
+.chrome-profile/
+
+# Dependencies and build
+node_modules/
+dist/
+dist-ssr/
+build/
+coverage/
+.vite/
+*.tsbuildinfo
+
+# Environment
+.env
+.env.*
+!.env.example
+!backend/.env.example
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Editor / OS
+.vscode/*
+!.vscode/extensions.json
+.idea/
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# Backend
+backend/src/generated/
+backend/storage/
+backend/.husky/_
+
+# TLS certificates (mounted at deploy time)
+nginx/certs/*
+!nginx/certs/.gitkeep
+backend/nginx/certs/*
+!backend/nginx/certs/.gitkeep

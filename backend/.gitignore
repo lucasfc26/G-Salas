@@ -1,0 +1,50 @@
+# compiled output
+dist
+node_modules
+build
+
+# tsc
+*.tsbuildinfo
+
+# logs
+logs
+*.log
+npm-debug.log*
+pnpm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# env
+.env
+.env.local
+.env.development
+.env.test
+.env.production
+!.env.example
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.idea
+.vscode/*
+!.vscode/extensions.json
+
+# tests
+coverage
+.nyc_output
+
+# Prisma
+prisma/*.db
+src/generated
+
+# Local file storage (dev)
+storage
+
+# TLS certificates
+nginx/certs/*
+!nginx/certs/.gitkeep
+
+# misc
+.husky/_

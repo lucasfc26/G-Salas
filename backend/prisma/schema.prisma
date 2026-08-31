@@ -1,0 +1,525 @@
+// NOTE: the "reservations" table has a generated "timeRange" column and a
+// gist EXCLUDE constraint (see migration 20260828202406) that Prisma cannot
+// express in this schema file. `prisma migrate dev` will therefore always
+// propose dropping that column — never run it against this DB. Instead,
+// create the migration folder by hand (see prisma/migrations/) and apply it
+// with `prisma migrate deploy`.
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ---------------------------------------------------------------------------
+// Users & professional profile
+// ---------------------------------------------------------------------------
+
+enum Role {
+  ADMIN
+  CLIENT
+}
+
+enum UserStatus {
+  ACTIVE
+  INACTIVE
+  SUSPENDED
+}
+
+model User {
+  id           String     @id @default(cuid())
+  name         String
+  email        String     @unique
+  passwordHash String
+  phone        String?
+  role         Role       @default(CLIENT)
+  status       UserStatus @default(ACTIVE)
+  avatarUrl    String?
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+  lastLoginAt  DateTime?
+
+  failedLoginAttempts Int       @default(0)
+  lockedUntil         DateTime?
+
+  professionalProfile ProfessionalProfile?
+  contracts           Contract[]
+  creditWallets       CreditWallet[]
+  reservations        Reservation[]
+  invoices            Invoice[]
+  payments            Payment[]
+  reviewedReceipts    PaymentReceipt[]     @relation("ReceiptReviewer")
+  notifications       Notification[]
+  auditLogs           AuditLog[]
+  refreshTokens       RefreshToken[]
+  passwordResetTokens PasswordResetToken[]
+
+  @@index([role])
+  @@index([status])
+  @@map("users")
+}
+
+enum ServiceType {
+  PRESENCIAL
+  ONLINE
+  HIBRIDO
+}
+
+model ProfessionalProfile {
+  id                     String      @id @default(cuid())
+  userId                 String      @unique
+  profession             String
+  registrationNumber     String?
+  specialties            String[]
+  serviceType            ServiceType @default(PRESENCIAL)
+  averagePatients        Int?
+  averageMonthlyHours    Int?
+  averageSessionDuration Int?
+  bio                    String?
+  birthDate              DateTime?
+  addressId              String?     @unique
+  createdAt              DateTime    @default(now())
+  updatedAt              DateTime    @updatedAt
+
+  user    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  address Address? @relation(fields: [addressId], references: [id], onDelete: SetNull)
+
+  @@map("professional_profiles")
+}
+
+model Address {
+  id           String   @id @default(cuid())
+  zipCode      String
+  street       String
+  number       String
+  complement   String?
+  neighborhood String
+  city         String
+  state        String
+  country      String   @default("BR")
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  professionalProfile ProfessionalProfile?
+
+  @@map("addresses")
+}
+
+// ---------------------------------------------------------------------------
+// Auth: refresh token rotation & password reset
+// ---------------------------------------------------------------------------
+
+/// One row per issued refresh token (hashed, never the raw value) so any
+/// session can be revoked individually. Rotation: refreshing marks the
+/// presented row revoked and inserts a new one; presenting an already
+/// revoked hash is treated as token theft and revokes every session for
+/// that user (roadmap 23/24).
+model RefreshToken {
+  id        String    @id @default(cuid())
+  userId    String
+  tokenHash String    @unique
+  userAgent String?
+  ip        String?
+  expiresAt DateTime
+  revokedAt DateTime?
+  createdAt DateTime  @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("refresh_tokens")
+}
+
+model PasswordResetToken {
+  id        String    @id @default(cuid())
+  userId    String
+  tokenHash String    @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("password_reset_tokens")
+}
+
+// ---------------------------------------------------------------------------
+// Rooms
+// ---------------------------------------------------------------------------
+
+enum RoomStatus {
+  AVAILABLE
+  MAINTENANCE
+  INACTIVE
+}
+
+model Room {
+  id          String     @id @default(cuid())
+  name        String
+  description String?
+  type        String?
+  capacity    Int
+  amenities   String[]
+  status      RoomStatus @default(AVAILABLE)
+  hourlyPrice Decimal    @db.Decimal(10, 2)
+  imageUrl    String?
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  availabilities Availability[]
+  blockedPeriods BlockedPeriod[]
+  reservations   Reservation[]
+
+  @@index([status])
+  @@map("rooms")
+}
+
+/// Recurring weekly availability rule for a room (e.g. Mon 08:00-20:00).
+/// Availability is calculated on demand from these rules — slots are never
+/// pre-generated and stored in bulk.
+model Availability {
+  id        String   @id @default(cuid())
+  roomId    String
+  weekday   Int // 0 (Sunday) - 6 (Saturday)
+  startTime String // "HH:mm"
+  endTime   String // "HH:mm"
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  room Room @relation(fields: [roomId], references: [id], onDelete: Cascade)
+
+  @@index([roomId, weekday])
+  @@map("availabilities")
+}
+
+enum BlockedPeriodType {
+  MAINTENANCE
+  HOLIDAY
+  OTHER
+}
+
+/// One-off exception window that overrides Availability — e.g. maintenance,
+/// holidays, ad-hoc closures. A null roomId blocks every room.
+model BlockedPeriod {
+  id        String            @id @default(cuid())
+  roomId    String?
+  startAt   DateTime
+  endAt     DateTime
+  type      BlockedPeriodType @default(OTHER)
+  reason    String?
+  createdAt DateTime          @default(now())
+  updatedAt DateTime          @updatedAt
+
+  room Room? @relation(fields: [roomId], references: [id], onDelete: Cascade)
+
+  @@index([roomId, startAt, endAt])
+  @@map("blocked_periods")
+}
+
+// ---------------------------------------------------------------------------
+// Plans, contracts & credits
+// ---------------------------------------------------------------------------
+
+model Plan {
+  id                String   @id @default(cuid())
+  name              String
+  monthlyHours      Int
+  monthlyValue      Decimal  @db.Decimal(10, 2)
+  cancellationLimit Int
+  active            Boolean  @default(true)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  contracts Contract[]
+
+  @@map("plans")
+}
+
+enum ContractStatus {
+  ACTIVE
+  EXPIRING_SOON
+  EXPIRED
+  RENEWAL
+}
+
+model Contract {
+  id                      String         @id @default(cuid())
+  userId                  String
+  planId                  String?
+  startDate               DateTime
+  endDate                 DateTime
+  monthlyHours            Int
+  cancellationLimit       Int
+  cancellationsUsed       Int            @default(0)
+  cancellationWindowHours Int            @default(24)
+  status                  ContractStatus @default(ACTIVE)
+  documentUrl             String?
+  createdAt               DateTime       @default(now())
+  updatedAt               DateTime       @updatedAt
+
+  user          User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  plan          Plan?          @relation(fields: [planId], references: [id], onDelete: SetNull)
+  creditWallets CreditWallet[]
+  invoices      Invoice[]
+
+  @@index([userId])
+  @@index([status])
+  @@map("contracts")
+}
+
+model CreditWallet {
+  id           String   @id @default(cuid())
+  userId       String
+  contractId   String
+  balance      Int      @default(0)
+  totalGranted Int      @default(0)
+  totalUsed    Int      @default(0)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  user         User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  contract     Contract            @relation(fields: [contractId], references: [id], onDelete: Cascade)
+  transactions CreditTransaction[]
+
+  @@index([userId])
+  @@index([contractId])
+  @@map("credit_wallets")
+}
+
+enum CreditTransactionType {
+  CREDIT
+  DEBIT
+  REFUND
+  ADJUSTMENT
+  EXPIRATION
+}
+
+/// Append-only ledger. Wallet balances are always derived from — and must
+/// never be mutated without — an entry here (see roadmap sections 6 and 33).
+model CreditTransaction {
+  id            String                @id @default(cuid())
+  walletId      String
+  type          CreditTransactionType
+  amount        Int
+  referenceType String?
+  referenceId   String?
+  description   String?
+  createdAt     DateTime              @default(now())
+
+  wallet CreditWallet @relation(fields: [walletId], references: [id], onDelete: Cascade)
+
+  @@index([walletId])
+  @@index([referenceType, referenceId])
+  @@map("credit_transactions")
+}
+
+// ---------------------------------------------------------------------------
+// Reservations
+// ---------------------------------------------------------------------------
+
+enum ReservationStatus {
+  PENDING
+  CONFIRMED
+  COMPLETED
+  CANCELLED
+  NO_SHOW
+  REJECTED
+}
+
+model Reservation {
+  id                  String            @id @default(cuid())
+  userId              String
+  roomId              String
+  startAt             DateTime
+  endAt               DateTime
+  duration            Int // minutes
+  status              ReservationStatus @default(PENDING)
+  creditTransactionId String?
+  cancellationReason  String?
+  cancelledAt         DateTime?
+  createdAt           DateTime          @default(now())
+  updatedAt           DateTime          @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  // Restrict, not Cascade: a room is only ever soft-deleted (status =
+  // INACTIVE) so its reservation history can never be silently destroyed.
+  room Room @relation(fields: [roomId], references: [id], onDelete: Restrict)
+
+  @@index([userId])
+  @@index([roomId, startAt, endAt])
+  @@index([status])
+  @@map("reservations")
+}
+
+// ---------------------------------------------------------------------------
+// Financial
+// ---------------------------------------------------------------------------
+
+enum InvoiceStatus {
+  PENDING
+  PAID
+  OVERDUE
+  CANCELLED
+  UNDER_REVIEW
+}
+
+model Invoice {
+  id             String        @id @default(cuid())
+  userId         String
+  contractId     String?
+  amount         Decimal       @db.Decimal(10, 2)
+  dueDate        DateTime
+  referenceMonth String // "YYYY-MM"
+  status         InvoiceStatus @default(PENDING)
+  description    String?
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  contract Contract? @relation(fields: [contractId], references: [id], onDelete: SetNull)
+  payments Payment[]
+
+  @@index([userId])
+  @@index([status])
+  @@index([dueDate])
+  @@map("invoices")
+}
+
+enum PaymentStatus {
+  PENDING
+  UNDER_REVIEW
+  APPROVED
+  REJECTED
+}
+
+model Payment {
+  id        String        @id @default(cuid())
+  invoiceId String
+  userId    String
+  amount    Decimal       @db.Decimal(10, 2)
+  method    String?
+  status    PaymentStatus @default(PENDING)
+  paidAt    DateTime?
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+
+  invoice Invoice         @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  user    User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  receipt PaymentReceipt?
+
+  @@index([invoiceId])
+  @@index([userId])
+  @@index([status])
+  @@map("payments")
+}
+
+enum PaymentReceiptStatus {
+  PENDING_REVIEW
+  APPROVED
+  REJECTED
+}
+
+model PaymentReceipt {
+  id               String               @id @default(cuid())
+  paymentId        String               @unique
+  fileUrl          String
+  originalFileName String
+  mimeType         String
+  fileSize         Int
+  status           PaymentReceiptStatus @default(PENDING_REVIEW)
+  uploadedAt       DateTime             @default(now())
+  reviewedAt       DateTime?
+  reviewedBy       String?
+  rejectionReason  String?
+
+  payment  Payment @relation(fields: [paymentId], references: [id], onDelete: Cascade)
+  reviewer User?   @relation("ReceiptReviewer", fields: [reviewedBy], references: [id], onDelete: SetNull)
+
+  @@index([status])
+  @@map("payment_receipts")
+}
+
+// ---------------------------------------------------------------------------
+// Notifications
+// ---------------------------------------------------------------------------
+
+enum NotificationType {
+  CONTRACT_EXPIRING
+  CONTRACT_EXPIRED
+  PAYMENT_PENDING
+  PAYMENT_APPROVED
+  PAYMENT_REJECTED
+  RESERVATION_CONFIRMED
+  RESERVATION_CANCELLED
+  LOW_CREDITS
+}
+
+enum NotificationChannel {
+  IN_APP
+  EMAIL
+  WHATSAPP
+  PUSH
+}
+
+model Notification {
+  id        String              @id @default(cuid())
+  userId    String
+  type      NotificationType
+  channel   NotificationChannel @default(IN_APP)
+  title     String
+  body      String
+  metadata  Json?
+  read      Boolean             @default(false)
+  readAt    DateTime?
+  createdAt DateTime            @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, read])
+  @@index([type])
+  @@map("notifications")
+}
+
+// ---------------------------------------------------------------------------
+// Audit
+// ---------------------------------------------------------------------------
+
+enum AuditAction {
+  LOGIN
+  LOGIN_FAILED
+  LOGOUT
+  CREATE_RESERVATION
+  CANCEL_RESERVATION
+  CREATE_CONTRACT
+  UPDATE_CONTRACT
+  UPLOAD_RECEIPT
+  APPROVE_PAYMENT
+  REJECT_PAYMENT
+  CREDIT_ADJUSTMENT
+  USER_UPDATE
+}
+
+model AuditLog {
+  id        String      @id @default(cuid())
+  userId    String?
+  action    AuditAction
+  entity    String
+  entityId  String?
+  metadata  Json?
+  ip        String?
+  userAgent String?
+  createdAt DateTime    @default(now())
+
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([entity, entityId])
+  @@index([action])
+  @@index([createdAt])
+  @@map("audit_logs")
+}
