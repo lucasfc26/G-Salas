@@ -58,7 +58,7 @@ describe('Auth (e2e)', () => {
   it('rejects login with wrong password using a generic message', async () => {
     const res = await request(server())
       .post('/api/v1/auth/login')
-      .send({ email: 'admin@lumiar.dev', password: 'wrong-password' });
+      .send({ email: 'admin@esalas.dev', password: 'wrong-password' });
 
     expect(res.status).toBe(401);
     expect(error(res).message).toBe('Credenciais inválidas.');
@@ -67,7 +67,7 @@ describe('Auth (e2e)', () => {
   it('rejects login for a non-existent e-mail with the same generic message', async () => {
     const res = await request(server())
       .post('/api/v1/auth/login')
-      .send({ email: 'nao-existe@lumiar.dev', password: 'whatever123' });
+      .send({ email: 'nao-existe@esalas.dev', password: 'whatever123' });
 
     expect(res.status).toBe(401);
     expect(error(res).message).toBe('Credenciais inválidas.');
@@ -81,7 +81,7 @@ describe('Auth (e2e)', () => {
   it('logs in and returns a working token pair', async () => {
     const res = await request(server())
       .post('/api/v1/auth/login')
-      .send({ email: 'admin@lumiar.dev', password: 'Senha@123' });
+      .send({ email: 'admin@esalas.dev', password: 'Senha@123' });
 
     expect(res.status).toBe(200);
     const tokens = data<TokenPairData>(res);
@@ -94,14 +94,14 @@ describe('Auth (e2e)', () => {
 
     expect(me.status).toBe(200);
     const profile = data<{ email: string; role: string }>(me);
-    expect(profile.email).toBe('admin@lumiar.dev');
+    expect(profile.email).toBe('admin@esalas.dev');
     expect(profile.role).toBe('ADMIN');
   });
 
   it('rotates the refresh token and revokes the old one', async () => {
     const login = await request(server())
       .post('/api/v1/auth/login')
-      .send({ email: 'cliente@lumiar.dev', password: 'Senha@123' });
+      .send({ email: 'cliente@esalas.dev', password: 'Senha@123' });
     const { refreshToken: firstRefresh } = data<TokenPairData>(login);
 
     const refreshed = await request(server())
@@ -127,7 +127,7 @@ describe('Auth (e2e)', () => {
   it('logs out and invalidates the refresh token', async () => {
     const login = await request(server())
       .post('/api/v1/auth/login')
-      .send({ email: 'cliente@lumiar.dev', password: 'Senha@123' });
+      .send({ email: 'cliente@esalas.dev', password: 'Senha@123' });
     const { refreshToken } = data<TokenPairData>(login);
 
     const logout = await request(server())
@@ -144,10 +144,10 @@ describe('Auth (e2e)', () => {
   it('never reveals whether an e-mail exists on forgot-password', async () => {
     const known = await request(server())
       .post('/api/v1/auth/forgot-password')
-      .send({ email: 'admin@lumiar.dev' });
+      .send({ email: 'admin@esalas.dev' });
     const unknown = await request(server())
       .post('/api/v1/auth/forgot-password')
-      .send({ email: 'nao-existe@lumiar.dev' });
+      .send({ email: 'nao-existe@esalas.dev' });
 
     expect(known.status).toBe(200);
     expect(unknown.status).toBe(200);

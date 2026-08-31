@@ -47,10 +47,10 @@ describe('Receipts (e2e)', () => {
 
     const adminLogin = await request(server())
       .post('/api/v1/auth/login')
-      .send({ email: 'admin@lumiar.dev', password: 'Senha@123' });
+      .send({ email: 'admin@esalas.dev', password: 'Senha@123' });
     adminToken = data<{ accessToken: string }>(adminLogin).accessToken;
 
-    const clientEmail = `recibos-client-${Date.now()}@lumiar.dev`;
+    const clientEmail = `recibos-client-${Date.now()}@esalas.dev`;
     await request(server())
       .post('/api/v1/users')
       .set('Authorization', `Bearer ${adminToken}`)
@@ -65,7 +65,7 @@ describe('Receipts (e2e)', () => {
       .send({ email: clientEmail, password: 'Senha@123' });
     clientToken = data<{ accessToken: string }>(clientLogin).accessToken;
 
-    const strangerEmail = `recibos-stranger-${Date.now()}@lumiar.dev`;
+    const strangerEmail = `recibos-stranger-${Date.now()}@esalas.dev`;
     await request(server())
       .post('/api/v1/users')
       .set('Authorization', `Bearer ${adminToken}`)

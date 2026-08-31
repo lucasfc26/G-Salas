@@ -46,19 +46,19 @@ describe('Credits (e2e)', () => {
 
     const adminLogin = await request(server())
       .post('/api/v1/auth/login')
-      .send({ email: 'admin@lumiar.dev', password: 'Senha@123' });
+      .send({ email: 'admin@esalas.dev', password: 'Senha@123' });
     adminToken = data<{ accessToken: string }>(adminLogin).accessToken;
 
     const clientLogin = await request(server())
       .post('/api/v1/auth/login')
-      .send({ email: 'cliente@lumiar.dev', password: 'Senha@123' });
+      .send({ email: 'cliente@esalas.dev', password: 'Senha@123' });
     clientToken = data<{ accessToken: string }>(clientLogin).accessToken;
     const me = await request(server())
       .get('/api/v1/auth/me')
       .set('Authorization', `Bearer ${clientToken}`);
     const clientUserId = data<{ id: string }>(me).id;
 
-    const strangerEmail = `stranger-${Date.now()}@lumiar.dev`;
+    const strangerEmail = `stranger-${Date.now()}@esalas.dev`;
     await request(server())
       .post('/api/v1/users')
       .set('Authorization', `Bearer ${adminToken}`)

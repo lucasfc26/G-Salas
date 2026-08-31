@@ -42,10 +42,10 @@ describe('Contracts (e2e)', () => {
 
     const adminLogin = await request(server())
       .post('/api/v1/auth/login')
-      .send({ email: 'admin@lumiar.dev', password: 'Senha@123' });
+      .send({ email: 'admin@esalas.dev', password: 'Senha@123' });
     adminToken = data<{ accessToken: string }>(adminLogin).accessToken;
 
-    const clientEmail = `contratos-client-${Date.now()}@lumiar.dev`;
+    const clientEmail = `contratos-client-${Date.now()}@esalas.dev`;
     const created = await request(server())
       .post('/api/v1/users')
       .set('Authorization', `Bearer ${adminToken}`)
@@ -61,7 +61,7 @@ describe('Contracts (e2e)', () => {
       .send({ email: clientEmail, password: 'Senha@123' });
     clientToken = data<{ accessToken: string }>(clientLogin).accessToken;
 
-    const strangerEmail = `contratos-stranger-${Date.now()}@lumiar.dev`;
+    const strangerEmail = `contratos-stranger-${Date.now()}@esalas.dev`;
     await request(server())
       .post('/api/v1/users')
       .set('Authorization', `Bearer ${adminToken}`)

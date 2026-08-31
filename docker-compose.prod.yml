@@ -22,7 +22,7 @@ services:
       interval: 10s
       timeout: 5s
       retries: 10
-    networks: [lumiar]
+    networks: [esalas]
 
   redis:
     image: redis:8-alpine
@@ -35,7 +35,7 @@ services:
       interval: 10s
       timeout: 5s
       retries: 10
-    networks: [lumiar]
+    networks: [esalas]
 
   migrate:
     build:
@@ -46,7 +46,7 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
-    networks: [lumiar]
+    networks: [esalas]
     profiles: [tools]
 
   api:
@@ -64,7 +64,7 @@ services:
         condition: service_healthy
     volumes:
       - storage_data:/app/storage
-    networks: [lumiar]
+    networks: [esalas]
     expose: ['3000']
 
   worker:
@@ -82,14 +82,14 @@ services:
         condition: service_healthy
     volumes:
       - storage_data:/app/storage
-    networks: [lumiar]
+    networks: [esalas]
 
   frontend:
     build:
       context: ./frontend
       dockerfile: Dockerfile
     restart: unless-stopped
-    networks: [lumiar]
+    networks: [esalas]
     expose: ['80']
 
   nginx:
@@ -102,10 +102,10 @@ services:
     volumes:
       - ./nginx/nginx.conf:/etc/nginx/conf.d/default.conf:ro
       - ./nginx/certs:/etc/nginx/certs:ro
-    networks: [lumiar]
+    networks: [esalas]
 
 networks:
-  lumiar:
+  esalas:
 
 volumes:
   postgres_data:

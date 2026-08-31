@@ -164,9 +164,13 @@ export default function Profile() {
                   <option>Terapeuta ocupacional</option>
                   <option>Fonoaudiólogo</option>
                   <option>Psicanalista</option>
+                  <option>Dentista</option>
+                  <option>Nutricionista</option>
+                  <option>Fisioterapeuta</option>
+                  <option>Outro profissional</option>
                 </Select>
               </Field>
-              <Field label="CRP / Registro profissional">
+              <Field label="Registro profissional (CRP, CRO, CRN, CREFITO...)">
                 <Input value={form.registry} onChange={set("registry")} />
               </Field>
               <Field label="Tempo de atuação">

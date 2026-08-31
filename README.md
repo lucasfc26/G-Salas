@@ -1,6 +1,8 @@
-# Lumiar — espaço terapeutico
+# E-Salas
 
-Monorepo do sistema de gestão de salas: **backend** (NestJS) e **frontend** (React + Vite) no mesmo Git.
+Monorepo do sistema de gestão de aluguel de salas e consultórios compartilhados para psicólogos, dentistas,
+nutricionistas, fisioterapeutas e outros profissionais: **backend** (NestJS) e **frontend** (React + Vite) no
+mesmo Git.
 
 ```
 .
@@ -61,7 +63,7 @@ O NGINX na porta 80 entrega o frontend e encaminha `/api`, `/uploads` e `/health
 Repositório único na raiz do workspace. Para publicar:
 
 ```bash
-git remote add origin https://github.com/lucasfc26/Lumiar.git
+git remote add origin https://github.com/lucasfc26/E-Salas.git
 git add .
 git commit -m "Unifica backend e frontend no mesmo repositório"
 ```

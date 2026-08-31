@@ -12,11 +12,11 @@ async function main() {
   const passwordHash = await argon2.hash(SEED_PASSWORD);
 
   const admin = await prisma.user.upsert({
-    where: { email: 'admin@lumiar.dev' },
+    where: { email: 'admin@esalas.dev' },
     update: {},
     create: {
-      name: 'Administradora Lumiar',
-      email: 'admin@lumiar.dev',
+      name: 'Administradora E-Salas',
+      email: 'admin@esalas.dev',
       passwordHash,
       role: 'ADMIN',
       status: 'ACTIVE',
@@ -24,11 +24,11 @@ async function main() {
   });
 
   const client = await prisma.user.upsert({
-    where: { email: 'cliente@lumiar.dev' },
+    where: { email: 'cliente@esalas.dev' },
     update: {},
     create: {
       name: 'Ana Beatriz Souza',
-      email: 'cliente@lumiar.dev',
+      email: 'cliente@esalas.dev',
       passwordHash,
       role: 'CLIENT',
       status: 'ACTIVE',

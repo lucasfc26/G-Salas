@@ -44,10 +44,10 @@ describe('Dashboard (e2e)', () => {
 
     const adminLogin = await request(server())
       .post('/api/v1/auth/login')
-      .send({ email: 'admin@lumiar.dev', password: 'Senha@123' });
+      .send({ email: 'admin@esalas.dev', password: 'Senha@123' });
     adminToken = data<{ accessToken: string }>(adminLogin).accessToken;
 
-    const clientEmail = `dash-client-${Date.now()}@lumiar.dev`;
+    const clientEmail = `dash-client-${Date.now()}@esalas.dev`;
     const created = await request(server())
       .post('/api/v1/users')
       .set('Authorization', `Bearer ${adminToken}`)
@@ -159,7 +159,7 @@ describe('Dashboard (e2e)', () => {
       activeContracts: number;
     }>(before);
 
-    const newClientEmail = `dash-admin-check-${Date.now()}@lumiar.dev`;
+    const newClientEmail = `dash-admin-check-${Date.now()}@esalas.dev`;
     await request(server())
       .post('/api/v1/users')
       .set('Authorization', auth(adminToken))

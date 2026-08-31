@@ -57,13 +57,13 @@ describe('Reservations (e2e)', () => {
 
     const adminLogin = await request(server())
       .post('/api/v1/auth/login')
-      .send({ email: 'admin@lumiar.dev', password: 'Senha@123' });
+      .send({ email: 'admin@esalas.dev', password: 'Senha@123' });
     adminToken = data<{ accessToken: string }>(adminLogin).accessToken;
 
     // A dedicated user (not the shared seed client) keeps this suite's
     // credit/contract assertions exact — the seed client already has an
     // active contract of its own, which would otherwise compete with it.
-    const clientEmail = `reservas-client-${Date.now()}@lumiar.dev`;
+    const clientEmail = `reservas-client-${Date.now()}@esalas.dev`;
     await request(server())
       .post('/api/v1/users')
       .set('Authorization', `Bearer ${adminToken}`)
@@ -82,7 +82,7 @@ describe('Reservations (e2e)', () => {
       .set('Authorization', `Bearer ${clientToken}`);
     clientUserId = data<{ id: string }>(me).id;
 
-    const strangerEmail = `stranger-res-${Date.now()}@lumiar.dev`;
+    const strangerEmail = `stranger-res-${Date.now()}@esalas.dev`;
     await request(server())
       .post('/api/v1/users')
       .set('Authorization', `Bearer ${adminToken}`)
