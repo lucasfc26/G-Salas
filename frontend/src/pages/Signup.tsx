@@ -67,6 +67,33 @@ function formatExpiry(value: string) {
   return `${digits.slice(0, 2)}/${digits.slice(2)}`;
 }
 
+function maskPhone(value: string) {
+  const digits = value.replace(/\D/g, "").slice(0, 11);
+  if (digits.length === 0) return "";
+  if (digits.length <= 2) return `(${digits}`;
+  if (digits.length <= 6) return `(${digits.slice(0, 2)}) ${digits.slice(2)}`;
+  if (digits.length <= 10) {
+    return `(${digits.slice(0, 2)}) ${digits.slice(2, 6)}-${digits.slice(6)}`;
+  }
+  return `(${digits.slice(0, 2)}) ${digits.slice(2, 7)}-${digits.slice(7)}`;
+}
+
+function maskEmail(value: string) {
+  const cleaned = value.toLowerCase().replace(/\s+/g, "").replace(/[^a-z0-9._%+\-@]/g, "");
+  const at = cleaned.indexOf("@");
+  if (at === -1) return cleaned.slice(0, 64);
+  const local = cleaned.slice(0, at).replace(/@/g, "").slice(0, 64);
+  const domain = cleaned
+    .slice(at + 1)
+    .replace(/@/g, "")
+    .replace(/[^a-z0-9.-]/g, "")
+    .slice(0, 255);
+  if (cleaned.endsWith("@") && domain.length === 0) return `${local}@`;
+  return domain ? `${local}@${domain}` : local;
+}
+
+const EMAIL_PATTERN = /^[a-z0-9._%+\-]+@[a-z0-9.-]+\.[a-z]{2,}$/;
+
 export default function Signup({ onBack }: { onBack: () => void }) {
   const { register, toast, theme, toggleTheme } = useApp();
   const [step, setStep] = useState<1 | 2 | 3>(1);
@@ -87,11 +114,14 @@ export default function Signup({ onBack }: { onBack: () => void }) {
   const [cardExpiry, setCardExpiry] = useState("");
   const [cardCvv, setCardCvv] = useState("");
 
+  const phoneDigits = phone.replace(/\D/g, "");
+  const phoneOk = phoneDigits.length === 0 || phoneDigits.length === 10 || phoneDigits.length === 11;
   const passwordOk = password.length >= 8 && /[a-zA-Z]/.test(password) && /\d/.test(password);
   const dataOk =
     name.trim().length > 1 &&
     spaceName.trim().length > 1 &&
-    /\S+@\S+\.\S+/.test(email) &&
+    EMAIL_PATTERN.test(email) &&
+    phoneOk &&
     passwordOk &&
     password === confirm;
 
@@ -235,21 +265,41 @@ export default function Signup({ onBack }: { onBack: () => void }) {
                 <div className="relative">
                   <Mail className="pointer-events-none absolute left-3.5 top-1/2 h-[18px] w-[18px] -translate-y-1/2 text-faint" />
                   <Input
-                    type="email"
+                    type="text"
+                    inputMode="email"
+                    autoComplete="email"
+                    autoCapitalize="none"
+                    autoCorrect="off"
+                    spellCheck={false}
                     value={email}
-                    onChange={(e) => setEmail(e.target.value)}
+                    onChange={(e) => setEmail(maskEmail(e.target.value))}
                     className="pl-11"
                     placeholder="voce@email.com"
                     required
                   />
                 </div>
               </Field>
-              <Field label="Telefone" hint="Opcional">
+              <Field label="Telefone" hint="Opcional · (11) 99999-0000">
                 <div className="relative">
                   <Phone className="pointer-events-none absolute left-3.5 top-1/2 h-[18px] w-[18px] -translate-y-1/2 text-faint" />
-                  <Input value={phone} onChange={(e) => setPhone(e.target.value)} className="pl-11" placeholder="(11) 99999-0000" />
+                  <Input
+                    type="tel"
+                    inputMode="tel"
+                    autoComplete="tel"
+                    value={phone}
+                    onChange={(e) => setPhone(maskPhone(e.target.value))}
+                    className="pl-11"
+                    placeholder="(11) 99999-0000"
+                    maxLength={16}
+                  />
                 </div>
               </Field>
+              {phoneDigits.length > 0 && !phoneOk && (
+                <p className="text-[12.5px] font-medium text-rose-600">Informe um telefone com DDD, 10 ou 11 dígitos.</p>
+              )}
+              {email.length > 0 && !EMAIL_PATTERN.test(email) && (
+                <p className="text-[12.5px] font-medium text-rose-600">Informe um e-mail no formato nome@dominio.com.</p>
+              )}
               <div className="grid gap-4 sm:grid-cols-2">
                 <Field label="Senha" hint="Mínimo 8 caracteres, com letras e números">
                   <div className="relative">
