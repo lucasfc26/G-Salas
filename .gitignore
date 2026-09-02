@@ -47,3 +47,4 @@ nginx/certs/*
 !nginx/certs/.gitkeep
 backend/nginx/certs/*
 !backend/nginx/certs/.gitkeep
+notes.md

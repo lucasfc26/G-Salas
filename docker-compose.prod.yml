@@ -17,6 +17,10 @@ services:
       POSTGRES_USER: ${POSTGRES_USER:-postgres}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}
       POSTGRES_DB: ${POSTGRES_DB:-room_rental}
+    # Only 127.0.0.1 — DBeaver reaches this via SSH tunnel. Never 0.0.0.0.
+    # Default 5435: host 5432 is already Projectfy on this VPS.
+    ports:
+      - '${POSTGRES_PUBLISH:-127.0.0.1:5435}:5432'
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
