@@ -2,6 +2,7 @@ import { Type } from 'class-transformer';
 import {
   IsArray,
   IsEnum,
+  IsIn,
   IsInt,
   IsNumber,
   IsOptional,
@@ -11,6 +12,7 @@ import {
   Min,
 } from 'class-validator';
 import { RoomStatus } from '../../generated/prisma/enums.js';
+import { ROOM_AMENITIES } from '../constants/room-amenities.constant.js';
 
 export class CreateRoomDto {
   @IsString()
@@ -35,7 +37,7 @@ export class CreateRoomDto {
 
   @IsOptional()
   @IsArray()
-  @IsString({ each: true })
+  @IsIn(ROOM_AMENITIES, { each: true })
   amenities?: string[];
 
   @IsOptional()

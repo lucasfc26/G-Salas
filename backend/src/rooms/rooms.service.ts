@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { Prisma } from '../generated/prisma/client.js';
 import {
   toImageVariantUrls,
@@ -37,12 +41,17 @@ const ROOM_SELECT = {
   imageUrl: true,
   createdAt: true,
   updatedAt: true,
+  photos: {
+    select: { id: true, imageKey: true },
+    orderBy: { position: 'asc' },
+  },
 } satisfies Prisma.RoomSelect;
 
 type RoomRow = Prisma.RoomGetPayload<{ select: typeof ROOM_SELECT }>;
 
-export interface RoomView extends Omit<RoomRow, 'imageUrl'> {
+export interface RoomView extends Omit<RoomRow, 'imageUrl' | 'photos'> {
   image: ImageVariantUrls | null;
+  photos: (ImageVariantUrls & { id: string })[];
 }
 
 @Injectable()
@@ -164,11 +173,70 @@ export class RoomsService {
     return this.toView(room);
   }
 
+  async addPhotos(id: string, files: Express.Multer.File[]): Promise<RoomView> {
+    if (!files?.length) {
+      throw new BadRequestException('Nenhum arquivo enviado.');
+    }
+    await this.prisma.room.findUniqueOrThrow({ where: { id } });
+
+    for (const file of files) {
+      await this.fileValidation.assertValid({
+        buffer: file.buffer,
+        maxBytes: UPLOAD_LIMITS.AVATAR_MAX_BYTES,
+        allowedMimeTypes: ALLOWED_IMAGE_MIME_TYPES,
+      });
+    }
+
+    const last = await this.prisma.roomPhoto.aggregate({
+      where: { roomId: id },
+      _max: { position: true },
+    });
+    let position = (last._max.position ?? -1) + 1;
+
+    for (const file of files) {
+      const baseKey = await this.imageProcessing.processAndStore(
+        file.buffer,
+        `rooms/${id}`,
+      );
+      await this.prisma.roomPhoto.create({
+        data: { roomId: id, imageKey: baseKey, position: position++ },
+      });
+    }
+
+    await this.cache.invalidate(detailCacheKey(id));
+    await this.cache.invalidateByPrefix(LIST_CACHE_PREFIX);
+    return this.getById(id);
+  }
+
+  async deletePhoto(id: string, photoId: string): Promise<RoomView> {
+    const photo = await this.prisma.roomPhoto.findFirst({
+      where: { id: photoId, roomId: id },
+    });
+    if (!photo) {
+      throw new NotFoundException('Foto não encontrada.');
+    }
+
+    await this.prisma.roomPhoto.delete({ where: { id: photoId } });
+    await this.imageProcessing
+      .deleteVariants(photo.imageKey)
+      .catch(() => undefined);
+
+    await this.cache.invalidate(detailCacheKey(id));
+    await this.cache.invalidateByPrefix(LIST_CACHE_PREFIX);
+    return this.getById(id);
+  }
+
   private toView(room: RoomRow): RoomView {
-    const { imageUrl, ...rest } = room;
+    const { imageUrl, photos, ...rest } = room;
     return {
       ...rest,
       image: toImageVariantUrls(imageUrl, (key) => this.storage.publicUrl(key)),
+      photos: photos.map((photo) => ({
+        id: photo.id,
+        ...toImageVariantUrls(photo.imageKey, (key) =>
+          this.storage.publicUrl(key),
+        )!,
+      })),
     };
   }
 }

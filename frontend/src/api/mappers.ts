@@ -42,13 +42,20 @@ export function publicFileUrl(url?: string | null) {
 }
 
 export function mapRoom(raw: any): Room {
+  const photos = (raw.photos ?? []).map((p: any) => ({
+    id: p.id,
+    url: p.medium ?? p.original,
+  }));
   return {
     id: raw.id,
     name: raw.name,
+    description: raw.description ?? undefined,
     type: raw.type ?? "Sala",
     capacity: raw.capacity ?? 2,
+    hourlyPrice: Number(raw.hourlyPrice ?? 0),
     amenities: raw.amenities ?? [],
-    photo: raw.image?.medium ?? raw.image?.original ?? "/images/room-1.jpg",
+    photo: raw.image?.medium ?? raw.image?.original ?? photos[0]?.url ?? "/images/room-1.jpg",
+    photos,
     active: raw.status === "AVAILABLE",
     blocked: raw.status === "MAINTENANCE" || raw.status === "INACTIVE",
   };

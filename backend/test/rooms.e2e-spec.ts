@@ -175,4 +175,81 @@ describe('Rooms (e2e)', () => {
       .attach('file', Buffer.from('irrelevant'), 'x.png');
     expect(res.status).toBe(403);
   });
+
+  it('rejects amenities outside the fixed catalog', async () => {
+    const res = await request(server())
+      .post('/api/v1/rooms')
+      .set('Authorization', auth(adminToken))
+      .send({
+        name: `Sala Amenidade Inválida ${Date.now()}`,
+        capacity: 2,
+        hourlyPrice: 60,
+        amenities: ['Piscina'],
+      });
+    expect(res.status).toBe(400);
+  });
+
+  it('uploads, lists and deletes gallery photos for a room', async () => {
+    const create = await request(server())
+      .post('/api/v1/rooms')
+      .set('Authorization', auth(adminToken))
+      .send({
+        name: `Sala Galeria ${Date.now()}`,
+        capacity: 2,
+        hourlyPrice: 60,
+      });
+    const room = data<{ id: string }>(create);
+
+    const png = await sharp({
+      create: {
+        width: 20,
+        height: 20,
+        channels: 3,
+        background: { r: 10, g: 20, b: 30 },
+      },
+    })
+      .png()
+      .toBuffer();
+
+    const upload = await request(server())
+      .post(`/api/v1/rooms/${room.id}/photos`)
+      .set('Authorization', auth(adminToken))
+      .attach('files', png, 'a.png')
+      .attach('files', png, 'b.png');
+    expect(upload.status).toBe(201);
+    const withPhotos = data<{
+      photos: { id: string; medium: string }[];
+    }>(upload);
+    expect(withPhotos.photos).toHaveLength(2);
+    expect(withPhotos.photos[0].medium).toMatch(
+      new RegExp(`/uploads/rooms/${room.id}/.+/medium\\.webp$`),
+    );
+
+    const photoId = withPhotos.photos[0].id;
+    const del = await request(server())
+      .delete(`/api/v1/rooms/${room.id}/photos/${photoId}`)
+      .set('Authorization', auth(adminToken));
+    expect(del.status).toBe(200);
+    const afterDelete = data<{ photos: { id: string }[] }>(del);
+    expect(afterDelete.photos).toHaveLength(1);
+    expect(afterDelete.photos.some((p) => p.id === photoId)).toBe(false);
+  });
+
+  it('blocks non-admins from managing room photos', async () => {
+    const create = await request(server())
+      .post('/api/v1/rooms')
+      .set('Authorization', auth(adminToken))
+      .send({
+        name: `Sala Galeria Bloqueada ${Date.now()}`,
+        capacity: 2,
+        hourlyPrice: 60,
+      });
+    const room = data<{ id: string }>(create);
+
+    const res = await request(server())
+      .post(`/api/v1/rooms/${room.id}/photos`)
+      .set('Authorization', auth(clientToken))
+      .attach('files', Buffer.from('irrelevant'), 'x.png');
+    expect(res.status).toBe(403);
+  });
 });

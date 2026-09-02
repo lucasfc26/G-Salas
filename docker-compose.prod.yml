@@ -18,9 +18,9 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}
       POSTGRES_DB: ${POSTGRES_DB:-room_rental}
     # Only 127.0.0.1 — DBeaver reaches this via SSH tunnel. Never 0.0.0.0.
-    # Default 5435: host 5432 is already Projectfy on this VPS.
+    # 5432 = Projectfy on this VPS; 5435 is already taken. Use 5485.
     ports:
-      - '${POSTGRES_PUBLISH:-127.0.0.1:5435}:5432'
+      - '${POSTGRES_PUBLISH:-127.0.0.1:5485}:5432'
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
@@ -72,6 +72,18 @@ services:
       - storage_data:/app/storage
     networks: [gsalas]
     expose: ['3000']
+    healthcheck:
+      test:
+        [
+          'CMD',
+          'node',
+          '-e',
+          "fetch('http://127.0.0.1:3000/api/health').then((r)=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 25s
 
   worker:
     build:
@@ -101,7 +113,11 @@ services:
   nginx:
     image: nginx:1.27-alpine
     restart: unless-stopped
-    depends_on: [api, frontend]
+    depends_on:
+      api:
+        condition: service_healthy
+      frontend:
+        condition: service_started
     ports:
       - '${NGINX_PUBLISH:-127.0.0.1:8085}:80'
     volumes:

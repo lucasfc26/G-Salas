@@ -83,6 +83,27 @@ interface Ctx {
     cancellationWindowHours?: number;
   }) => Promise<void>;
   toggleRoom: (id: string) => Promise<void>;
+  createRoom: (input: {
+    name: string;
+    description?: string;
+    type?: string;
+    capacity: number;
+    hourlyPrice: number;
+    amenities: string[];
+  }) => Promise<string>;
+  updateRoomDetails: (
+    id: string,
+    input: {
+      name?: string;
+      description?: string;
+      type?: string;
+      capacity?: number;
+      hourlyPrice?: number;
+      amenities?: string[];
+    },
+  ) => Promise<void>;
+  uploadRoomPhotos: (id: string, files: File[]) => Promise<void>;
+  deleteRoomPhoto: (roomId: string, photoId: string) => Promise<void>;
   updateProfile: (input: { name?: string; phone?: string; profession?: string; registrationNumber?: string; specialties?: string[]; serviceType?: string; birthDate?: string }) => Promise<void>;
   createClient: (input: { name: string; email: string; phone?: string; password: string }) => Promise<string>;
 
@@ -469,6 +490,59 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const createRoom: Ctx["createRoom"] = async (input) => {
+    try {
+      const room = await api<{ id: string }>("/rooms", {
+        method: "POST",
+        body: JSON.stringify(input),
+      });
+      await hydrate();
+      toast("Sala cadastrada", "A sala foi criada com sucesso.", "success");
+      return room.id;
+    } catch (error) {
+      toast("Não foi possível cadastrar a sala", failMessage(error, "Confira os dados e tente novamente."), "danger");
+      throw error;
+    }
+  };
+
+  const updateRoomDetails: Ctx["updateRoomDetails"] = async (id, input) => {
+    try {
+      await api(`/rooms/${id}`, {
+        method: "PATCH",
+        body: JSON.stringify(input),
+      });
+      await hydrate();
+      toast("Sala atualizada", "As informações foram salvas.", "success");
+    } catch (error) {
+      toast("Não foi possível salvar a sala", failMessage(error, "Confira os dados e tente novamente."), "danger");
+      throw error;
+    }
+  };
+
+  const uploadRoomPhotos: Ctx["uploadRoomPhotos"] = async (id, files) => {
+    try {
+      const body = new FormData();
+      files.forEach((file) => body.append("files", file));
+      await api(`/rooms/${id}/photos`, { method: "POST", body });
+      await hydrate();
+      toast("Fotos enviadas", "A galeria da sala foi atualizada.", "success");
+    } catch (error) {
+      toast("Não foi possível enviar as fotos", failMessage(error, "Verifique os arquivos e tente novamente."), "danger");
+      throw error;
+    }
+  };
+
+  const deleteRoomPhoto: Ctx["deleteRoomPhoto"] = async (roomId, photoId) => {
+    try {
+      await api(`/rooms/${roomId}/photos/${photoId}`, { method: "DELETE" });
+      await hydrate();
+      toast("Foto removida", "A foto foi excluída da galeria.", "success");
+    } catch (error) {
+      toast("Não foi possível remover a foto", failMessage(error, "Tente novamente."), "danger");
+      throw error;
+    }
+  };
+
   const updateProfile: Ctx["updateProfile"] = async (input) => {
     try {
       if (input.name || input.phone) {
@@ -576,6 +650,10 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     toggleContract,
     createContract,
     toggleRoom,
+    createRoom,
+    updateRoomDetails,
+    uploadRoomPhotos,
+    deleteRoomPhoto,
     updateProfile,
     createClient,
     unreadCount,

@@ -1,0 +1,52 @@
+import {
+  Accessibility,
+  AirVent,
+  Armchair,
+  Car,
+  CookingPot,
+  Monitor,
+  PencilRuler,
+  Projector,
+  ShowerHead,
+  Sun,
+  Table,
+  Volume2,
+  VolumeX,
+  Wifi,
+  type LucideIcon,
+} from "lucide-react";
+
+// Kept in sync by hand with backend/src/rooms/constants/room-amenities.constant.ts
+export const ROOM_AMENITIES = [
+  "Wi-Fi",
+  "Ar-condicionado",
+  "TV / Monitor",
+  "Projetor",
+  "Quadro branco",
+  "Mesa de reunião",
+  "Cadeiras extras",
+  "Acessibilidade (PCD)",
+  "Isolamento acústico",
+  "Iluminação natural",
+  "Banheiro privativo",
+  "Copa / Cozinha",
+  "Estacionamento",
+  "Sistema de som",
+] as const;
+
+export const ROOM_AMENITY_ICONS: Record<string, LucideIcon> = {
+  "Wi-Fi": Wifi,
+  "Ar-condicionado": AirVent,
+  "TV / Monitor": Monitor,
+  "Projetor": Projector,
+  "Quadro branco": PencilRuler,
+  "Mesa de reunião": Table,
+  "Cadeiras extras": Armchair,
+  "Acessibilidade (PCD)": Accessibility,
+  "Isolamento acústico": VolumeX,
+  "Iluminação natural": Sun,
+  "Banheiro privativo": ShowerHead,
+  "Copa / Cozinha": CookingPot,
+  "Estacionamento": Car,
+  "Sistema de som": Volume2,
+};

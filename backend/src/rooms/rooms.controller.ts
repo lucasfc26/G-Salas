@@ -1,15 +1,17 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   Param,
   Patch,
   Post,
   Query,
   UploadedFile,
+  UploadedFiles,
   UseInterceptors,
 } from '@nestjs/common';
-import { FileInterceptor } from '@nestjs/platform-express';
+import { FileInterceptor, FilesInterceptor } from '@nestjs/platform-express';
 import { memoryStorage } from 'multer';
 import { Roles } from '../common/decorators/roles.decorator.js';
 import { UPLOAD_LIMITS } from '../common/constants/upload-limits.constants.js';
@@ -58,5 +60,26 @@ export class RoomsController {
     @UploadedFile() file: Express.Multer.File,
   ) {
     return this.roomsService.uploadImage(id, file);
+  }
+
+  @Roles(Role.ADMIN)
+  @Post(':id/photos')
+  @UseInterceptors(
+    FilesInterceptor('files', 10, {
+      storage: memoryStorage(),
+      limits: { fileSize: UPLOAD_LIMITS.AVATAR_MAX_BYTES },
+    }),
+  )
+  uploadPhotos(
+    @Param('id') id: string,
+    @UploadedFiles() files: Express.Multer.File[],
+  ) {
+    return this.roomsService.addPhotos(id, files);
+  }
+
+  @Roles(Role.ADMIN)
+  @Delete(':id/photos/:photoId')
+  deletePhoto(@Param('id') id: string, @Param('photoId') photoId: string) {
+    return this.roomsService.deletePhoto(id, photoId);
   }
 }

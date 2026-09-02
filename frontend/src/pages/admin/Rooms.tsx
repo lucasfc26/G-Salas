@@ -13,14 +13,17 @@ import {
   SectionTitle,
   Toggle,
 } from "../../components/ui";
-import { RoomModal } from "../../components/modals";
+import { RoomFormModal, RoomModal } from "../../components/modals";
 import type { Room } from "../../types";
 
 export default function Rooms() {
-  const { toast, navigate, rooms, reservations, clients, toggleRoom } = useApp();
+  const { navigate, rooms, reservations, clients, toggleRoom } = useApp();
   const [q, setQ] = useState("");
   const [detail, setDetail] = useState<Room | null>(null);
   const [showBlocked, setShowBlocked] = useState(true);
+  const [formTarget, setFormTarget] = useState<"new" | string | null>(null);
+  const formOpen = formTarget !== null;
+  const formRoom = formTarget && formTarget !== "new" ? rooms.find((r) => r.id === formTarget) ?? null : null;
 
   const todayISO = toISO(new Date());
   const list = rooms.filter((r) => (showBlocked ? true : !r.blocked)).filter((r) => r.name.toLowerCase().includes(q.toLowerCase()));
@@ -49,7 +52,7 @@ export default function Rooms() {
         <div className="flex flex-wrap items-center gap-2">
           <SearchInput value={q} onChange={setQ} placeholder="Buscar sala..." />
           <Toggle checked={showBlocked} onChange={setShowBlocked} label="Mostrar bloqueadas" />
-          <Button icon={<Plus className="h-[18px] w-[18px]" />} onClick={() => toast("Nova sala", "Formulário de cadastro em desenvolvimento.", "info")}>
+          <Button icon={<Plus className="h-[18px] w-[18px]" />} onClick={() => setFormTarget("new")}>
             Nova sala
           </Button>
         </div>
@@ -119,7 +122,12 @@ export default function Rooms() {
                 <div className="mt-4 flex items-center justify-between border-t border-line pt-4">
                   <Toggle checked={!room.blocked} onChange={() => toggleBlock(room.id)} />
                   <div className="flex gap-2">
-                    <Button size="sm" variant="ghost" icon={<Pencil className="h-4 w-4" />} onClick={() => toast("Editar sala", "Edição disponível na próxima versão.", "info")}>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      icon={<Pencil className="h-4 w-4" />}
+                      onClick={() => setFormTarget(room.id)}
+                    >
                       Editar
                     </Button>
                     <Button size="sm" variant="soft" onClick={() => setDetail(room)}>
@@ -162,6 +170,7 @@ export default function Rooms() {
       </div>
 
       <RoomModal open={!!detail} onClose={() => setDetail(null)} room={detail} date={todayISO} />
+      <RoomFormModal open={formOpen} onClose={() => setFormTarget(null)} room={formRoom} />
     </div>
   );
 }

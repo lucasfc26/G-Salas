@@ -23,13 +23,21 @@ export type FinancialSituation = "em_dia" | "pendente" | "vencido";
 
 export type Modality = "presencial" | "online" | "hibrido";
 
+export interface RoomPhoto {
+  id: string;
+  url: string;
+}
+
 export interface Room {
   id: string;
   name: string;
+  description?: string;
   type: string;
   capacity: number;
+  hourlyPrice: number;
   amenities: string[];
   photo: string;
+  photos: RoomPhoto[];
   active: boolean;
   blocked?: boolean;
 }

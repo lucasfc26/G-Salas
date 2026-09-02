@@ -183,9 +183,26 @@ model Room {
   availabilities Availability[]
   blockedPeriods BlockedPeriod[]
   reservations   Reservation[]
+  photos         RoomPhoto[]
 
   @@index([status])
   @@map("rooms")
+}
+
+/// Extra gallery photos for a room, beyond its single cover `imageUrl`.
+/// Stored as base storage keys (see ImageProcessingService) and ordered by
+/// `position` so the admin can control display order.
+model RoomPhoto {
+  id        String   @id @default(cuid())
+  roomId    String
+  imageKey  String
+  position  Int      @default(0)
+  createdAt DateTime @default(now())
+
+  room Room @relation(fields: [roomId], references: [id], onDelete: Cascade)
+
+  @@index([roomId])
+  @@map("room_photos")
 }
 
 /// Recurring weekly availability rule for a room (e.g. Mon 08:00-20:00).
