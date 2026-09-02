@@ -272,7 +272,15 @@ export function Shell({ children }: { children: React.ReactNode }) {
   const nav = role === "admin" ? adminNav : clientNav;
   const title =
     nav.find((n) => n.key === page.name)?.label ??
-    (page.name === "notifications" ? "Notificações" : page.name === "new-client" ? "Novo cliente" : "Detalhes");
+    (page.name === "notifications"
+      ? "Notificações"
+      : page.name === "new-client"
+        ? "Novo cliente"
+        : page.name === "new-room"
+          ? "Nova sala"
+          : page.name === "edit-room"
+            ? "Editar sala"
+            : "Detalhes");
 
   useEffect(() => setDrawer(false), [page.name]);
 

@@ -12,6 +12,7 @@ import {
   mergeInvoicePayment,
 } from "./api/mappers";
 import { buildUsageByMonth, offsetISO, toISO, type RoomAvailability } from "./data/mock";
+import { compressPhotos } from "./utils/compress-photo";
 import type {
   AppNotification,
   Client,
@@ -90,6 +91,13 @@ interface Ctx {
     capacity: number;
     hourlyPrice: number;
     amenities: string[];
+    zipCode?: string;
+    street?: string;
+    number?: string;
+    complement?: string;
+    neighborhood?: string;
+    city?: string;
+    state?: string;
   }) => Promise<string>;
   updateRoomDetails: (
     id: string,
@@ -100,6 +108,13 @@ interface Ctx {
       capacity?: number;
       hourlyPrice?: number;
       amenities?: string[];
+      zipCode?: string;
+      street?: string;
+      number?: string;
+      complement?: string;
+      neighborhood?: string;
+      city?: string;
+      state?: string;
     },
   ) => Promise<void>;
   uploadRoomPhotos: (id: string, files: File[]) => Promise<void>;
@@ -521,11 +536,18 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   const uploadRoomPhotos: Ctx["uploadRoomPhotos"] = async (id, files) => {
     try {
+      const { files: compressed, errors } = await compressPhotos(files);
+      if (errors.length) {
+        throw new Error(errors[0]);
+      }
+      if (!compressed.length) {
+        throw new Error("Nenhuma foto válida para enviar.");
+      }
       const body = new FormData();
-      files.forEach((file) => body.append("files", file));
+      compressed.forEach((file) => body.append("files", file));
       await api(`/rooms/${id}/photos`, { method: "POST", body });
       await hydrate();
-      toast("Fotos enviadas", "A galeria da sala foi atualizada.", "success");
+      toast("Fotos enviadas", "As imagens foram comprimidas e salvas na galeria.", "success");
     } catch (error) {
       toast("Não foi possível enviar as fotos", failMessage(error, "Verifique os arquivos e tente novamente."), "danger");
       throw error;

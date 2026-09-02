@@ -14,6 +14,8 @@ import type {
   Room,
 } from "../types";
 import { monthLabel } from "../data/mock";
+import { maskEmail, maskPhone } from "../utils/masks";
+import { formatRoomAddress } from "../utils/room-address";
 
 export function mapRole(role?: string): Role {
   return role === "ADMIN" ? "admin" : "client";
@@ -58,6 +60,22 @@ export function mapRoom(raw: any): Room {
     photos,
     active: raw.status === "AVAILABLE",
     blocked: raw.status === "MAINTENANCE" || raw.status === "INACTIVE",
+    zipCode: raw.zipCode ?? "",
+    street: raw.street ?? "",
+    number: raw.number ?? "",
+    complement: raw.complement ?? "",
+    neighborhood: raw.neighborhood ?? "",
+    city: raw.city ?? "",
+    state: raw.state ?? "",
+    address: formatRoomAddress({
+      zipCode: raw.zipCode,
+      street: raw.street,
+      number: raw.number,
+      complement: raw.complement,
+      neighborhood: raw.neighborhood,
+      city: raw.city,
+      state: raw.state,
+    }),
   };
 }
 
@@ -190,9 +208,9 @@ export function mapClient(raw: any, contract?: any): Client {
     professionalName: raw.name,
     profession: profile.profession ?? "Profissional",
     registry: profile.registrationNumber ?? "—",
-    email: raw.email,
-    phone: raw.phone ?? "",
-    whatsapp: raw.phone ?? "",
+    email: maskEmail(raw.email ?? ""),
+    phone: maskPhone(raw.phone ?? ""),
+    whatsapp: maskPhone(raw.phone ?? ""),
     document: "",
     birthDate: profile.birthDate ? localISODate(profile.birthDate) : "",
     plan: contract?.plan?.name ?? (contract?.monthlyHours ? `${contract.monthlyHours}h/mês` : "—"),

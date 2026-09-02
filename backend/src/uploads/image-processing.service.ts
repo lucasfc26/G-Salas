@@ -10,14 +10,20 @@ export interface ImageVariantSizes {
 }
 
 const DEFAULT_SIZES: ImageVariantSizes = {
-  thumbnail: 150,
-  medium: 600,
-  original: 1920,
+  thumbnail: 240,
+  medium: 800,
+  original: 1600,
+};
+
+const VARIANT_QUALITY: Record<keyof ImageVariantSizes, number> = {
+  thumbnail: 60,
+  medium: 70,
+  original: 74,
 };
 
 /**
  * Resizes + compresses an uploaded image into thumbnail/medium/original
- * WebP variants (roadmap Fase 14) instead of ever serving the raw upload.
+ * WebP variants instead of ever persisting the raw upload.
  */
 @Injectable()
 export class ImageProcessingService {
@@ -29,23 +35,28 @@ export class ImageProcessingService {
     sizes: ImageVariantSizes = DEFAULT_SIZES,
   ): Promise<string> {
     const baseKey = `${folder}/${randomUUID()}`;
+    const source = sharp(buffer, {
+      failOn: 'none',
+      sequentialRead: true,
+      limitInputPixels: 48_000_000,
+    }).rotate();
 
-    await Promise.all(
-      (Object.entries(sizes) as [keyof ImageVariantSizes, number][]).map(
-        async ([variant, width]) => {
-          const output = await sharp(buffer)
-            .rotate()
-            .resize({ width, withoutEnlargement: true })
-            .webp({ quality: variant === 'thumbnail' ? 70 : 82 })
-            .toBuffer();
-          await this.storage.save(
-            `${baseKey}/${variant}.webp`,
-            output,
-            'image/webp',
-          );
-        },
-      ),
-    );
+    for (const variant of Object.keys(sizes) as (keyof ImageVariantSizes)[]) {
+      const output = await source
+        .clone()
+        .resize({
+          width: sizes[variant],
+          withoutEnlargement: true,
+          fit: 'inside',
+        })
+        .webp({
+          quality: VARIANT_QUALITY[variant],
+          effort: 4,
+          smartSubsample: true,
+        })
+        .toBuffer();
+      await this.storage.save(`${baseKey}/${variant}.webp`, output, 'image/webp');
+    }
 
     return baseKey;
   }

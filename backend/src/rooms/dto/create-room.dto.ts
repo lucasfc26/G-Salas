@@ -48,4 +48,39 @@ export class CreateRoomDto {
   @IsNumber({ maxDecimalPlaces: 2 })
   @Min(0)
   hourlyPrice!: number;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(16)
+  zipCode?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(160)
+  street?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(20)
+  number?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(80)
+  complement?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(80)
+  neighborhood?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(80)
+  city?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(2)
+  state?: string;
 }

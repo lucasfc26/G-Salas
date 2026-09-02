@@ -52,7 +52,7 @@ export class RoomsController {
   @UseInterceptors(
     FileInterceptor('file', {
       storage: memoryStorage(),
-      limits: { fileSize: UPLOAD_LIMITS.AVATAR_MAX_BYTES },
+      limits: { fileSize: UPLOAD_LIMITS.PHOTO_MAX_BYTES },
     }),
   )
   uploadImage(
@@ -67,7 +67,7 @@ export class RoomsController {
   @UseInterceptors(
     FilesInterceptor('files', 10, {
       storage: memoryStorage(),
-      limits: { fileSize: UPLOAD_LIMITS.AVATAR_MAX_BYTES },
+      limits: { fileSize: UPLOAD_LIMITS.PHOTO_MAX_BYTES },
     }),
   )
   uploadPhotos(

@@ -17,6 +17,7 @@ import {
   cx,
 } from "../../components/ui";
 import type { Modality } from "../../types";
+import { maskCpfCnpj, maskEmail, maskPhone } from "../../utils/masks";
 
 const weekDays = ["Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
 const periods = ["Manhã", "Tarde", "Noite"];
@@ -50,11 +51,11 @@ export default function Profile() {
   const [form, setForm] = useState({
     name: client.name,
     professionalName: client.professionalName,
-    document: client.document,
+    document: maskCpfCnpj(client.document),
     birthDate: client.birthDate,
-    phone: client.phone,
-    whatsapp: client.whatsapp,
-    email: client.email,
+    phone: maskPhone(client.phone),
+    whatsapp: maskPhone(client.whatsapp),
+    email: maskEmail(client.email),
     profession: client.profession,
     registry: client.registry,
     experience: "11 anos",
@@ -132,8 +133,15 @@ export default function Profile() {
               <Field label="Nome profissional">
                 <Input value={form.professionalName} onChange={set("professionalName")} />
               </Field>
-              <Field label="CPF">
-                <Input value={form.document} onChange={set("document")} />
+              <Field label="CPF ou CNPJ" hint="000.000.000-00 ou 00.000.000/0000-00">
+                <Input
+                  inputMode="numeric"
+                  autoComplete="off"
+                  value={form.document}
+                  onChange={(e) => setForm((f) => ({ ...f, document: maskCpfCnpj(e.target.value) }))}
+                  placeholder="000.000.000-00"
+                  maxLength={18}
+                />
               </Field>
               <Field label="Data de nascimento">
                 <Input type="date" value={form.birthDate} onChange={set("birthDate")} />
@@ -142,13 +150,39 @@ export default function Profile() {
                 <Input value={`${age} anos`} readOnly className="cursor-default opacity-70" />
               </Field>
               <Field label="Telefone">
-                <Input value={form.phone} onChange={set("phone")} />
+                <Input
+                  type="tel"
+                  inputMode="tel"
+                  autoComplete="tel"
+                  value={form.phone}
+                  onChange={(e) => setForm((f) => ({ ...f, phone: maskPhone(e.target.value) }))}
+                  placeholder="(11) 98877-6655"
+                  maxLength={16}
+                />
               </Field>
               <Field label="WhatsApp">
-                <Input value={form.whatsapp} onChange={set("whatsapp")} />
+                <Input
+                  type="tel"
+                  inputMode="tel"
+                  autoComplete="tel"
+                  value={form.whatsapp}
+                  onChange={(e) => setForm((f) => ({ ...f, whatsapp: maskPhone(e.target.value) }))}
+                  placeholder="(11) 98877-6655"
+                  maxLength={16}
+                />
               </Field>
               <Field label="E-mail">
-                <Input type="email" value={form.email} onChange={set("email")} />
+                <Input
+                  type="text"
+                  inputMode="email"
+                  autoComplete="email"
+                  autoCapitalize="none"
+                  autoCorrect="off"
+                  spellCheck={false}
+                  value={form.email}
+                  onChange={(e) => setForm((f) => ({ ...f, email: maskEmail(e.target.value) }))}
+                  placeholder="voce@email.com"
+                />
               </Field>
             </div>
           </Card>

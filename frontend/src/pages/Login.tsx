@@ -15,6 +15,7 @@ import { useApp } from "../store";
 import { Button, Card, cx, Input, Toggle } from "../components/ui";
 import { Logo } from "../components/layout";
 import type { Role } from "../types";
+import { maskEmail } from "../utils/masks";
 
 const roles: { key: Role; label: string; desc: string; icon: React.ReactNode }[] = [
   {
@@ -121,9 +122,14 @@ export default function Login({ onSignup }: { onSignup: () => void }) {
               <div className="relative">
                 <Mail className="pointer-events-none absolute left-3.5 top-1/2 h-[18px] w-[18px] -translate-y-1/2 text-faint" />
                 <Input
-                  type="email"
+                  type="text"
+                  inputMode="email"
+                  autoComplete="email"
+                  autoCapitalize="none"
+                  autoCorrect="off"
+                  spellCheck={false}
                   value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  onChange={(e) => setEmail(maskEmail(e.target.value))}
                   className="pl-11"
                   placeholder="seu@email.com"
                   required

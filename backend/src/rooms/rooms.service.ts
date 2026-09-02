@@ -39,6 +39,13 @@ const ROOM_SELECT = {
   status: true,
   hourlyPrice: true,
   imageUrl: true,
+  zipCode: true,
+  street: true,
+  number: true,
+  complement: true,
+  neighborhood: true,
+  city: true,
+  state: true,
   createdAt: true,
   updatedAt: true,
   photos: {
@@ -143,7 +150,7 @@ export class RoomsService {
   async uploadImage(id: string, file: Express.Multer.File): Promise<RoomView> {
     await this.fileValidation.assertValid({
       buffer: file.buffer,
-      maxBytes: UPLOAD_LIMITS.AVATAR_MAX_BYTES,
+      maxBytes: UPLOAD_LIMITS.PHOTO_MAX_BYTES,
       allowedMimeTypes: ALLOWED_IMAGE_MIME_TYPES,
     });
 
@@ -182,7 +189,7 @@ export class RoomsService {
     for (const file of files) {
       await this.fileValidation.assertValid({
         buffer: file.buffer,
-        maxBytes: UPLOAD_LIMITS.AVATAR_MAX_BYTES,
+        maxBytes: UPLOAD_LIMITS.PHOTO_MAX_BYTES,
         allowedMimeTypes: ALLOWED_IMAGE_MIME_TYPES,
       });
     }

@@ -30,6 +30,7 @@ import {
   StatCard,
 } from "../../components/ui";
 import { Row } from "../../components/modals";
+import { maskCpfCnpj, maskEmail, maskPhone } from "../../utils/masks";
 
 const tabs = [
   { key: "perfil", label: "Perfil", icon: <User className="h-4 w-4" /> },
@@ -95,8 +96,8 @@ export default function ClientDetail({ clientId }: { clientId: string }) {
           </div>
 
           <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-            <Info icon={<Mail className="h-4 w-4" />} label="E-mail" value={client.email} />
-            <Info icon={<Phone className="h-4 w-4" />} label="WhatsApp" value={client.whatsapp} />
+            <Info icon={<Mail className="h-4 w-4" />} label="E-mail" value={maskEmail(client.email)} />
+            <Info icon={<Phone className="h-4 w-4" />} label="WhatsApp" value={maskPhone(client.whatsapp || client.phone)} />
             <Info icon={<MapPin className="h-4 w-4" />} label="Cidade" value={client.city} />
             <Info icon={<Star className="h-4 w-4" />} label="Cliente desde" value={fmtDate(client.joinedAt)} />
           </div>
@@ -147,10 +148,10 @@ export default function ClientDetail({ clientId }: { clientId: string }) {
                 <Card className="p-4">
                   <Row label="Nome completo" value={client.name} />
                   <Row label="Nome profissional" value={client.professionalName} />
-                  <Row label="CPF" value={client.document} />
+                  <Row label="CPF / CNPJ" value={maskCpfCnpj(client.document)} />
                   <Row label="Nascimento" value={fmtDate(client.birthDate)} />
-                  <Row label="E-mail" value={client.email} />
-                  <Row label="Telefone" value={client.phone} />
+                  <Row label="E-mail" value={maskEmail(client.email)} />
+                  <Row label="Telefone" value={maskPhone(client.phone)} />
                 </Card>
                 <Card className="p-4">
                   <Row label="Profissão" value={client.profession} />

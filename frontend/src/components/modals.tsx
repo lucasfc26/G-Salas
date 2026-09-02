@@ -5,21 +5,15 @@ import {
   Clock,
   CreditCard,
   FileText,
-  ImagePlus,
   Info,
-  Loader2,
   MapPin,
-  Tag,
-  Trash2,
-  UploadCloud,
   Users,
   Wifi,
-  X,
 } from "lucide-react";
 import { useApp } from "../store";
-import { fmtDate, getDaySlots, HOURS, toISO, weekdayShort } from "../data/mock";
-import { ROOM_AMENITIES, ROOM_AMENITY_ICONS } from "../data/room-amenities";
-import { Alert, Avatar, Badge, Button, Card, Chip, cx, Field, Input, Modal, TextArea, slotStyleMap } from "./ui";
+import { fmtDate, getDaySlots, HOURS, money, toISO, weekdayShort } from "../data/mock";
+import { ROOM_AMENITY_ICONS } from "../data/room-amenities";
+import { Alert, Avatar, Badge, Button, Card, cx, Modal, TextArea, slotStyleMap } from "./ui";
 import type { Payment, Reservation, Room } from "../types";
 
 /* ------------------------------------------------------------------ */
@@ -202,6 +196,7 @@ export function RoomModal({
               <Badge tone="brand">
                 <Users className="mr-1 h-3 w-3" /> {room.capacity} pessoas
               </Badge>
+              <Badge tone="slate">{money(room.hourlyPrice)} / hora</Badge>
             </div>
           </div>
 
@@ -220,18 +215,28 @@ export function RoomModal({
 
           {room.description && <p className="text-[13.5px] leading-relaxed text-muted">{room.description}</p>}
 
+          {room.address && (
+            <p className="flex items-start gap-2 text-[13px] text-muted">
+              <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-brand-600" />
+              {room.address}
+            </p>
+          )}
+
           <div>
             <p className="mb-2 text-[12px] font-semibold uppercase tracking-wide text-faint">Características</p>
             <div className="flex flex-wrap gap-2">
-              {room.amenities.map((a) => (
-                <span
-                  key={a}
-                  className="inline-flex items-center gap-1.5 rounded-full border border-line bg-surface-2 px-3 py-1.5 text-[12.5px] font-medium text-muted"
-                >
-                  {a.includes("Wi-Fi") ? <Wifi className="h-3.5 w-3.5" /> : a.includes("Ar") ? <AirVent className="h-3.5 w-3.5" /> : <MapPin className="h-3.5 w-3.5" />}
-                  {a}
-                </span>
-              ))}
+              {room.amenities.map((a) => {
+                const Icon = ROOM_AMENITY_ICONS[a];
+                return (
+                  <span
+                    key={a}
+                    className="inline-flex items-center gap-1.5 rounded-full border border-line bg-surface-2 px-3 py-1.5 text-[12.5px] font-medium text-muted"
+                  >
+                    {Icon ? <Icon className="h-3.5 w-3.5" /> : a.includes("Wi-Fi") ? <Wifi className="h-3.5 w-3.5" /> : a.includes("Ar") ? <AirVent className="h-3.5 w-3.5" /> : <MapPin className="h-3.5 w-3.5" />}
+                    {a}
+                  </span>
+                );
+              })}
             </div>
           </div>
 
@@ -276,266 +281,6 @@ export function RoomModal({
   );
 }
 
-/* ------------------------------------------------------------------ */
-/* Room create/edit (admin)                                            */
-/* ------------------------------------------------------------------ */
-
-export function RoomFormModal({
-  open,
-  onClose,
-  room,
-}: {
-  open: boolean;
-  onClose: () => void;
-  room: Room | null;
-}) {
-  const { createRoom, updateRoomDetails, uploadRoomPhotos, deleteRoomPhoto } = useApp();
-  const isEdit = !!room;
-
-  const [name, setName] = useState(room?.name ?? "");
-  const [description, setDescription] = useState(room?.description ?? "");
-  const [type, setType] = useState(room?.type ?? "");
-  const [capacity, setCapacity] = useState(room?.capacity ?? 2);
-  const [hourlyPrice, setHourlyPrice] = useState(room?.hourlyPrice ?? 0);
-  const [amenities, setAmenities] = useState<string[]>(room?.amenities ?? []);
-  const [pendingFiles, setPendingFiles] = useState<{ file: File; preview: string }[]>([]);
-  const [drag, setDrag] = useState(false);
-  const [saving, setSaving] = useState(false);
-  const [uploadingPhotos, setUploadingPhotos] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  const canSubmit = name.trim().length > 0 && capacity > 0 && hourlyPrice >= 0;
-
-  const toggleAmenity = (tag: string) => {
-    setAmenities((prev) => (prev.includes(tag) ? prev.filter((a) => a !== tag) : [...prev, tag]));
-  };
-
-  const addFiles = (files: FileList | File[] | null) => {
-    if (!files) return;
-    const list = Array.from(files)
-      .filter((f) => f.type.startsWith("image/"))
-      .map((file) => ({ file, preview: URL.createObjectURL(file) }));
-    setPendingFiles((prev) => [...prev, ...list]);
-  };
-
-  const submit = async () => {
-    if (!canSubmit) return;
-    setError(null);
-    setSaving(true);
-    try {
-      const payload = {
-        name: name.trim(),
-        description: description.trim() || undefined,
-        type: type.trim() || undefined,
-        capacity: Number(capacity),
-        hourlyPrice: Number(hourlyPrice),
-        amenities,
-      };
-      if (isEdit && room) {
-        await updateRoomDetails(room.id, payload);
-        if (pendingFiles.length) {
-          await uploadRoomPhotos(room.id, pendingFiles.map((p) => p.file));
-          setPendingFiles([]);
-        }
-      } else {
-        const id = await createRoom(payload);
-        if (pendingFiles.length) {
-          await uploadRoomPhotos(id, pendingFiles.map((p) => p.file));
-          setPendingFiles([]);
-        }
-      }
-      onClose();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Não foi possível salvar a sala.");
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  const removePendingFile = (index: number) => {
-    setPendingFiles((prev) => {
-      URL.revokeObjectURL(prev[index].preview);
-      return prev.filter((_, i) => i !== index);
-    });
-  };
-
-  const uploadExistingPhotos = async (files: FileList | File[] | null) => {
-    if (!room || !files) return;
-    const list = Array.from(files).filter((f) => f.type.startsWith("image/"));
-    if (!list.length) return;
-    setUploadingPhotos(true);
-    try {
-      await uploadRoomPhotos(room.id, list);
-    } finally {
-      setUploadingPhotos(false);
-    }
-  };
-
-  return (
-    <Modal
-      open={open}
-      onClose={onClose}
-      title={isEdit ? "Editar sala" : "Nova sala"}
-      subtitle={isEdit ? room?.name : "Cadastre uma nova sala disponível para reserva"}
-      size="lg"
-      footer={
-        <>
-          <Button variant="ghost" onClick={onClose}>
-            Cancelar
-          </Button>
-          <Button onClick={submit} disabled={!canSubmit || saving}>
-            {saving ? "Salvando..." : isEdit ? "Salvar alterações" : "Cadastrar sala"}
-          </Button>
-        </>
-      }
-    >
-      <div className="space-y-5">
-        <div className="grid gap-4 sm:grid-cols-2">
-          <Field label="Nome da sala" className="sm:col-span-2">
-            <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Ex.: Sala Serenidade" required />
-          </Field>
-          <Field label="Tipo" hint="Ex.: Individual, Grupo, Terapia">
-            <Input value={type} onChange={(e) => setType(e.target.value)} placeholder="Individual" />
-          </Field>
-          <Field label="Capacidade (pessoas)">
-            <Input
-              type="number"
-              min={1}
-              max={50}
-              value={capacity}
-              onChange={(e) => setCapacity(Number(e.target.value))}
-            />
-          </Field>
-          <Field label="Valor por hora (R$)" className="sm:col-span-2">
-            <Input
-              type="number"
-              min={0}
-              step="0.01"
-              value={hourlyPrice}
-              onChange={(e) => setHourlyPrice(Number(e.target.value))}
-            />
-          </Field>
-          <Field label="Descrição" className="sm:col-span-2" hint="Opcional">
-            <TextArea
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              placeholder="Detalhes sobre a sala, ambiente, indicação de uso..."
-            />
-          </Field>
-        </div>
-
-        <div>
-          <p className="mb-2 flex items-center gap-1.5 text-[12px] font-semibold uppercase tracking-wide text-faint">
-            <Tag className="h-3.5 w-3.5" /> O que tem nesta sala
-          </p>
-          <div className="flex flex-wrap gap-2">
-            {ROOM_AMENITIES.map((tag) => {
-              const Icon = ROOM_AMENITY_ICONS[tag];
-              const active = amenities.includes(tag);
-              return (
-                <Chip key={tag} active={active} onClick={() => toggleAmenity(tag)}>
-                  <span className="inline-flex items-center gap-1.5">
-                    {Icon && <Icon className="h-3.5 w-3.5" />}
-                    {tag}
-                  </span>
-                </Chip>
-              );
-            })}
-          </div>
-          <p className="mt-2 text-[11.5px] text-faint">
-            Toque para marcar o que a sala possui. Os itens não marcados não serão exibidos como disponíveis.
-          </p>
-        </div>
-
-        <div>
-          <p className="mb-2 flex items-center gap-1.5 text-[12px] font-semibold uppercase tracking-wide text-faint">
-            <ImagePlus className="h-3.5 w-3.5" /> Fotos da sala
-          </p>
-
-          {isEdit && room && room.photos.length > 0 && (
-            <div className="mb-3 grid grid-cols-3 gap-2 sm:grid-cols-4">
-              {room.photos.map((photo) => (
-                <div key={photo.id} className="group relative aspect-square overflow-hidden rounded-xl border border-line">
-                  <img src={photo.url} alt="" className="h-full w-full object-cover" />
-                  <button
-                    type="button"
-                    onClick={() => deleteRoomPhoto(room.id, photo.id)}
-                    className="absolute right-1 top-1 flex h-6 w-6 items-center justify-center rounded-lg bg-slate-900/70 text-white opacity-0 transition-opacity group-hover:opacity-100"
-                    title="Remover foto"
-                  >
-                    <Trash2 className="h-3.5 w-3.5" />
-                  </button>
-                </div>
-              ))}
-            </div>
-          )}
-
-          {pendingFiles.length > 0 && (
-            <div className="mb-3 grid grid-cols-3 gap-2 sm:grid-cols-4">
-              {pendingFiles.map((p, i) => (
-                <div key={p.preview} className="group relative aspect-square overflow-hidden rounded-xl border border-line">
-                  <img src={p.preview} alt="" className="h-full w-full object-cover" />
-                  <button
-                    type="button"
-                    onClick={() => removePendingFile(i)}
-                    className="absolute right-1 top-1 flex h-6 w-6 items-center justify-center rounded-lg bg-slate-900/70 text-white opacity-0 transition-opacity group-hover:opacity-100"
-                    title="Remover"
-                  >
-                    <X className="h-3.5 w-3.5" />
-                  </button>
-                </div>
-              ))}
-            </div>
-          )}
-
-          <div
-            onDragOver={(e) => {
-              e.preventDefault();
-              setDrag(true);
-            }}
-            onDragLeave={() => setDrag(false)}
-            onDrop={(e) => {
-              e.preventDefault();
-              setDrag(false);
-              if (isEdit && room) void uploadExistingPhotos(e.dataTransfer.files);
-              else addFiles(e.dataTransfer.files);
-            }}
-            className={cx(
-              "flex flex-col items-center justify-center rounded-2xl border-2 border-dashed px-6 py-7 text-center transition-all",
-              drag ? "border-brand-500 bg-brand-50/60 dark:bg-brand-500/10" : "border-line bg-surface-2/40",
-            )}
-          >
-            <span className="mb-2 flex h-10 w-10 items-center justify-center rounded-2xl bg-brand-50 text-brand-600 dark:bg-brand-500/15 dark:text-brand-300">
-              {uploadingPhotos ? <Loader2 className="h-5 w-5 animate-spin" /> : <ImagePlus className="h-5 w-5" />}
-            </span>
-            <p className="text-[13px] font-bold text-ink">Arraste fotos aqui ou</p>
-            <label className="mt-2 cursor-pointer rounded-xl bg-brand-600 px-4 py-2 text-[12.5px] font-bold text-white shadow-[0_8px_18px_-10px_rgba(20,100,133,.9)]">
-              Selecionar fotos
-              <input
-                type="file"
-                accept="image/*"
-                multiple
-                className="hidden"
-                onChange={(e) => {
-                  if (isEdit && room) void uploadExistingPhotos(e.target.files);
-                  else addFiles(e.target.files);
-                  e.target.value = "";
-                }}
-              />
-            </label>
-            <p className="mt-2 text-[11px] text-faint">JPG, PNG ou WebP · até 5 MB cada</p>
-          </div>
-        </div>
-
-        {error && (
-          <p className="rounded-xl bg-rose-50 px-3.5 py-2.5 text-[12.5px] font-semibold text-rose-700 dark:bg-rose-500/10 dark:text-rose-300">
-            {error}
-          </p>
-        )}
-      </div>
-    </Modal>
-  );
-}
 
 /* ------------------------------------------------------------------ */
 /* Reservation details                                                 */

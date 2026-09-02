@@ -18,6 +18,7 @@ import {
 import { useApp } from "../store";
 import { Button, Card, cx, Field, Input } from "../components/ui";
 import { Logo } from "../components/layout";
+import { EMAIL_PATTERN, isPhoneComplete, maskEmail, maskPhone } from "../utils/masks";
 
 export type SignupPlan = "FREE" | "MONTHLY" | "YEARLY";
 export type SignupPaymentMethod = "card" | "pix";
@@ -67,33 +68,6 @@ function formatExpiry(value: string) {
   return `${digits.slice(0, 2)}/${digits.slice(2)}`;
 }
 
-function maskPhone(value: string) {
-  const digits = value.replace(/\D/g, "").slice(0, 11);
-  if (digits.length === 0) return "";
-  if (digits.length <= 2) return `(${digits}`;
-  if (digits.length <= 6) return `(${digits.slice(0, 2)}) ${digits.slice(2)}`;
-  if (digits.length <= 10) {
-    return `(${digits.slice(0, 2)}) ${digits.slice(2, 6)}-${digits.slice(6)}`;
-  }
-  return `(${digits.slice(0, 2)}) ${digits.slice(2, 7)}-${digits.slice(7)}`;
-}
-
-function maskEmail(value: string) {
-  const cleaned = value.toLowerCase().replace(/\s+/g, "").replace(/[^a-z0-9._%+\-@]/g, "");
-  const at = cleaned.indexOf("@");
-  if (at === -1) return cleaned.slice(0, 64);
-  const local = cleaned.slice(0, at).replace(/@/g, "").slice(0, 64);
-  const domain = cleaned
-    .slice(at + 1)
-    .replace(/@/g, "")
-    .replace(/[^a-z0-9.-]/g, "")
-    .slice(0, 255);
-  if (cleaned.endsWith("@") && domain.length === 0) return `${local}@`;
-  return domain ? `${local}@${domain}` : local;
-}
-
-const EMAIL_PATTERN = /^[a-z0-9._%+\-]+@[a-z0-9.-]+\.[a-z]{2,}$/;
-
 export default function Signup({ onBack }: { onBack: () => void }) {
   const { register, toast, theme, toggleTheme } = useApp();
   const [step, setStep] = useState<1 | 2 | 3>(1);
@@ -115,7 +89,7 @@ export default function Signup({ onBack }: { onBack: () => void }) {
   const [cardCvv, setCardCvv] = useState("");
 
   const phoneDigits = phone.replace(/\D/g, "");
-  const phoneOk = phoneDigits.length === 0 || phoneDigits.length === 10 || phoneDigits.length === 11;
+  const phoneOk = isPhoneComplete(phone);
   const passwordOk = password.length >= 8 && /[a-zA-Z]/.test(password) && /\d/.test(password);
   const dataOk =
     name.trim().length > 1 &&

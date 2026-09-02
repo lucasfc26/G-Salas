@@ -2,6 +2,7 @@ import { useState } from "react";
 import { ArrowLeft, Eye, EyeOff, Mail, Phone, ShieldCheck, User, UserPlus } from "lucide-react";
 import { useApp } from "../../store";
 import { Button, Card, Field, Input } from "../../components/ui";
+import { EMAIL_PATTERN, isPhoneComplete, maskEmail, maskPhone } from "../../utils/masks";
 
 function randomPassword() {
   const chars = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789";
@@ -21,7 +22,8 @@ export default function NewClient() {
   const [error, setError] = useState<string | null>(null);
 
   const passwordValid = password.length >= 8 && /[a-zA-Z]/.test(password) && /\d/.test(password);
-  const canSubmit = name.trim().length > 0 && /\S+@\S+\.\S+/.test(email) && passwordValid;
+  const phoneOk = isPhoneComplete(phone);
+  const canSubmit = name.trim().length > 0 && EMAIL_PATTERN.test(email) && passwordValid && phoneOk;
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -70,9 +72,14 @@ export default function NewClient() {
             <div className="relative">
               <Mail className="pointer-events-none absolute left-3.5 top-1/2 h-[18px] w-[18px] -translate-y-1/2 text-faint" />
               <Input
-                type="email"
+                type="text"
+                inputMode="email"
+                autoComplete="email"
+                autoCapitalize="none"
+                autoCorrect="off"
+                spellCheck={false}
                 value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                onChange={(e) => setEmail(maskEmail(e.target.value))}
                 className="pl-11"
                 placeholder="cliente@email.com"
                 required
@@ -80,17 +87,27 @@ export default function NewClient() {
             </div>
           </Field>
 
-          <Field label="Telefone" hint="Opcional">
+          <Field label="Telefone" hint="Opcional · (11) 98877-6655">
             <div className="relative">
               <Phone className="pointer-events-none absolute left-3.5 top-1/2 h-[18px] w-[18px] -translate-y-1/2 text-faint" />
               <Input
+                type="tel"
+                inputMode="tel"
+                autoComplete="tel"
                 value={phone}
-                onChange={(e) => setPhone(e.target.value)}
+                onChange={(e) => setPhone(maskPhone(e.target.value))}
                 className="pl-11"
                 placeholder="(11) 98877-6655"
+                maxLength={16}
               />
             </div>
           </Field>
+          {phone.length > 0 && !phoneOk && (
+            <p className="text-[12.5px] font-medium text-rose-600">Informe um telefone com DDD, 10 ou 11 dígitos.</p>
+          )}
+          {email.length > 0 && !EMAIL_PATTERN.test(email) && (
+            <p className="text-[12.5px] font-medium text-rose-600">Informe um e-mail no formato nome@dominio.com.</p>
+          )}
 
           <Field
             label="Senha provisória"

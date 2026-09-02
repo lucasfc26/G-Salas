@@ -177,6 +177,13 @@ model Room {
   status      RoomStatus @default(AVAILABLE)
   hourlyPrice Decimal    @db.Decimal(10, 2)
   imageUrl    String?
+  zipCode      String?
+  street       String?
+  number       String?
+  complement   String?
+  neighborhood String?
+  city         String?
+  state        String?
   createdAt   DateTime   @default(now())
   updatedAt   DateTime   @updatedAt
 

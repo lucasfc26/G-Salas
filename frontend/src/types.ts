@@ -40,6 +40,14 @@ export interface Room {
   photos: RoomPhoto[];
   active: boolean;
   blocked?: boolean;
+  zipCode?: string;
+  street?: string;
+  number?: string;
+  complement?: string;
+  neighborhood?: string;
+  city?: string;
+  state?: string;
+  address?: string;
 }
 
 export interface Client {

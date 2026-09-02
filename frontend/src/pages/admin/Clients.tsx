@@ -13,6 +13,7 @@ import {
   ProgressBar,
   SearchInput,
 } from "../../components/ui";
+import { maskEmail, maskPhone } from "../../utils/masks";
 
 const filters = ["todos", "ativo", "inativo", "vencido", "vencendo"] as const;
 
@@ -102,8 +103,8 @@ export default function Clients() {
                     </td>
                     <td className="px-4 py-3 text-[12.5px] text-muted">{c.profession}</td>
                     <td className="px-4 py-3">
-                      <span className="block text-[12.5px] text-ink">{c.email}</span>
-                      <span className="block text-[11.5px] text-faint">{c.phone}</span>
+                      <span className="block text-[12.5px] text-ink">{maskEmail(c.email)}</span>
+                      <span className="block text-[11.5px] text-faint">{maskPhone(c.phone)}</span>
                     </td>
                     <td className="px-4 py-3 text-[12.5px] font-semibold text-ink">{c.plan}</td>
                     <td className="px-4 py-3">

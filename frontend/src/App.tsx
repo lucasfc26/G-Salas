@@ -12,6 +12,7 @@ import History from "./pages/client/History";
 import ClientFinancial from "./pages/client/Financial";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import Rooms from "./pages/admin/Rooms";
+import RoomForm from "./pages/admin/RoomForm";
 import AgendaGeral from "./pages/admin/AgendaGeral";
 import Clients from "./pages/admin/Clients";
 import NewClient from "./pages/admin/NewClient";
@@ -70,6 +71,10 @@ function AdminRouter({ page, param }: { page: string; param?: string }) {
       return <AdminDashboard />;
     case "rooms":
       return <Rooms />;
+    case "new-room":
+      return <RoomForm />;
+    case "edit-room":
+      return <RoomForm roomId={param} />;
     case "schedule":
       return <AgendaGeral />;
     case "clients":
